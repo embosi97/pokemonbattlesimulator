@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <link href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" rel="stylesheet">
+    <link href="app.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
+</head>
+<body>
+<div id="app" class="section is-size-2">
+    <p>{{ pokemonName }} wins</p>
+    <p>
+        <button v-on:click="battle()">Battle!</button>
+    </p>
+    <hr/>
+    <img class="sprite" v-bind:src="'https://img.pokemondb.net/sprites/home/normal/' + pokemonName.toLowerCase() + '.png'"/>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
