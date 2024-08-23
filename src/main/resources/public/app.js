@@ -1,18 +1,25 @@
 const app = Vue.createApp({
-    setup() {
-        let pokemonName = Vue.ref('________');
-        function battle () {
-            fetch("/attack?pokemonA=Bulbasaur&pokemonB=Ivysaur")
-                .then(response => response.json())
-                .then(data => {
-                    pokemonName.value = data.winner;
-                    console.log(`This pokemon has ${data.hitPoints} hit points.`);
-                })
-        }
+    data() {
         return {
-            pokemonName,
-            battle,
+            player: '',
+            computer: '',
+            error: null
+        };
+    },
+    methods: {
+        redirectToBattle() {
+            if (!this.player || !this.computer) {
+                this.error = 'Please enter both Pokemon species!';
+                return;
+            }
+
+            this.error = null;
+
+            //construct the attack url and redirect the user
+            const battleUrl = `/attack?player=${encodeURIComponent(this.player)}&computer=${encodeURIComponent(this.computer)}`;
+            window.location.href = battleUrl;
         }
     }
 });
+
 app.mount('#app');

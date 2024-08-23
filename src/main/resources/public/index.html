@@ -1,19 +1,66 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" xmlns:v-on="http://www.w3.org/1999/xhtml">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokemon Battle</title>
     <link href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" rel="stylesheet">
     <link href="app.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5; /* Optional: background color for better visibility */
+            padding-top: 60px; /* Space for the fixed banner */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .field, .control, .button, .notification {
+            margin: 10px 0;
+        }
+    </style>
 </head>
 <body>
-<div id="app" class="section is-size-2">
-    <p>{{ pokemonName }} wins</p>
-    <p>
-        <button v-on:click="battle()">Battle!</button>
-    </p>
-    <hr/>
-    <img class="sprite" v-bind:src="'https://img.pokemondb.net/sprites/home/normal/' + pokemonName.toLowerCase() + '.png'"/>
+<div id="banner"></div>
+<div id="app" class="container section">
+    <h1 class="title">Pokemon Battle!</h1>
+    <div class="field">
+        <label class="label">Player's Pokemon</label>
+        <div class="control">
+            <input class="input" type="text" v-model="player" placeholder="Enter Pokemon name"/>
+        </div>
+    </div>
+    <div class="field">
+        <label class="label">Computer's Pokemon</label>
+        <div class="control">
+            <input class="input" type="text" v-model="computer" placeholder="Enter Pokemon name"/>
+        </div>
+    </div>
+    <div class="control">
+        <button class="button is-primary" v-on:click="redirectToBattle">Battle!</button>
+    </div>
+    <div v-if="error" class="notification is-danger">
+        {{ error }}
+    </div>
 </div>
 <script src="app.js"></script>
+<script>
+    fetch('banner.html')
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById('banner').innerHTML = data;
+        });
+</script>
 </body>
 </html>
