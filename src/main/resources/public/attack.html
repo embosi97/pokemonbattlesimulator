@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokémon Battle Result</title>
+    <link href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+            padding-top: 60px;
+        }
+        .battle-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 50px;
+            font-size: 1.5em
+        }
+        .pokemon-card {
+            margin: 20px;
+        }
+        .pokemon-card img {
+            max-width: 150px;
+        }
+        .result {
+            font-size: 1.4em;
+            margin-top: 30px;
+        }
+        .back-button, .refresh-button {
+            margin-top: 20px;
+        }
+        .pokemon-win strong {
+            color: green;
+        }
+
+        .pokemon-lose strong {
+            color: red;
+        }
+
+    </style>
+</head>
+<body>
+<div id="banner"></div>
+
+<div id="app" class="container">
+    <h1 class="title">Pokemon Battle Result!</h1>
+    <div class="battle-container" v-if="battleData">
+        <div class="pokemon-card">
+            <h1><strong>{{ battleData.winner.nameValue }}</strong></h1>  <div class="pokemon-win"> <h1><strong> W </strong></h1> </div>
+            <img :src="`https://img.pokemondb.net/sprites/home/normal/${battleData.winner.nameValue.toLowerCase()}.png`" :alt="battleData.winner.nameValue">
+        </div>
+        <img src="vs.png" alt="VS" style="width: 100px; height: 100px;">
+        <div class="pokemon-card">
+            <h1><strong>{{ battleData.loser.nameValue }}</strong></h1> <div class="pokemon-lose"> <h1><strong> L </strong></h1> </div>
+            <img :src="`https://img.pokemondb.net/sprites/home/normal/${battleData.loser.nameValue.toLowerCase()}.png`" :alt="battleData.loser.nameValue">
+        </div>
+    </div>
+    <div class="result" v-if="battleData">
+        <p><strong>Winner:</strong> {{ battleData.winner.nameValue }} </p>
+        <p><strong>Remaining HP:</strong> {{ battleData.remainingHealthForWinner }} </p>
+        <p><strong>Turns Taken:</strong> {{ battleData.numberOfTurnsWon }}</p>
+        <p><strong>Is {{ battleData.winner.nameValue }} a Legendary Pokemon?:</strong> {{ battleData.winner.isLegendary ? 'Yes' : 'No' }}</p>
+        <p><strong>Special Attacks Used:</strong> {{ battleData.specialAttacksUsed }}</p>
+    </div>
+    <div v-else class="result">
+        <p>Error: {{ errorMessage }}</p>
+    </div>
+    <div class="refresh-button">
+        <button class="button is-link" @click="refresh">Retry</button>
+    </div>
+    <div class="back-button">
+        <button class="button is-link" @click="goBack">Back</button>
+    </div>
+</div>
+
+<script>
+    //load the banner
+    fetch('banner.html')
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById('banner').innerHTML = data;
+        });
+
+    const app = Vue.createApp({
+        data() {
+            return {
+                player: new URLSearchParams(window.location.search).get('player'),
+                computer: new URLSearchParams(window.location.search).get('computer'),
+                battleData: null,
+                errorMessage: ''
+            };
+        },
+        methods: {
+            fetchBattleData() {
+                fetch(`/attack?player=${encodeURIComponent(this.player)}&computer=${encodeURIComponent(this.computer)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            this.errorMessage = data.error;
+                        } else {
+                            this.battleData = data;
+                        }
+                    })
+                    .catch(error => {
+                        this.errorMessage = "Unable to fetch battle results.";
+                    });
+            },
+            refresh() {
+                window.location.reload();
+            },
+            goBack() {
+                window.history.back();
+            }
+        },
+        mounted() {
+            this.fetchBattleData();
+        }
+    });
+
+    app.mount('#app');
+</script>
+</body>
+</html>

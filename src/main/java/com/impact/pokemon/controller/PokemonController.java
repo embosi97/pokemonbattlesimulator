@@ -1,10 +1,9 @@
 package com.impact.pokemon.controller;
 
-import com.impact.pokemon.data.PokemonData;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.impact.pokemon.model.PokemonModel;
 import com.impact.pokemon.model.SimulationModel;
 import com.impact.pokemon.service.SimulationServiceImpl;
-import com.opencsv.exceptions.CsvValidationException;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,10 +18,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @AllArgsConstructor
 @RestController
@@ -40,22 +35,13 @@ public class PokemonController {
     @GetMapping("/attack")
     public ResponseEntity<String> simulateBattle(
             @RequestParam("player") String pokemon1,
-            @RequestParam("computer") String pokemon2) throws CsvValidationException, IOException {
+            @RequestParam("computer") String pokemon2) throws IOException {
 
         Resource bannerRaw = resourceLoader.getResource("classpath:public/banner.html");
 
         if (!bannerRaw.exists()) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("<h1>Banner resource not found.</h1>");
-        }
-
-        String bannerHtml;
-        try {
-            Path bannerPath = Paths.get(bannerRaw.getURI());
-            bannerHtml = Files.readString(bannerPath, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("<h1>Failed to read banner resource.</h1>");
         }
 
         logger.info("Retrieving Pokemon data!!!");
@@ -78,51 +64,10 @@ public class PokemonController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("<h1>An error occurred during the simulation.</h1><button onclick='window.history.back()'>Back</button>");
         }
 
-        String htmlResponse = "<!DOCTYPE html>" +
-                "<html lang='en'>" +
-                "<head>" +
-                "<meta charset='UTF-8'>" +
-                "<meta name='viewport' content='width=device-width, initial-scale=1.0'>" +
-                bannerHtml +
-                "<title>Pokémon Battle Result</title>" +
-                "<link href='https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css' rel='stylesheet'>" +
-                "<style>" +
-                "body { text-align: center; font-family: Arial, sans-serif; }" +
-                ".battle-container { display: flex; justify-content: center; align-items: center; margin-top: 50px; }" +
-                ".pokemon-card { margin: 20px; }" +
-                ".pokemon-card img { max-width: 150px; }" +
-                ".result { font-size: 1.5em; margin-top: 30px; }" +
-                ".back-button { margin-top: 20px; }" +
-                "</style>" +
-                "</head>" +
-                "<body>" +
-                "<div class='container'>" +
-                "<h1 class='title'>Pokemon Battle Result</h1>" +
-                "<div class='battle-container'>" +
-                "<div class='pokemon-card'>" +
-                "<h1><strong>" + pokemonModel1.getNameValue() + "</strong></h1>" +
-                "<img src='https://img.pokemondb.net/sprites/home/normal/" + pokemonModel1.getNameValue().toLowerCase() + ".png' alt='" + pokemonModel1.getNameValue() + "'>" +
-                "</div>" +
-                "<div class='pokemon-card'>" +
-                "<h1><strong>" + pokemonModel2.getNameValue() + "</strong></h1>" +
-                "<img src='https://img.pokemondb.net/sprites/home/normal/" + pokemonModel2.getNameValue().toLowerCase() + ".png' alt='" + pokemonModel2.getNameValue() + "'>" +
-                "</div>" +
-                "</div>" +
-                "<div class='result'>" +
-                "<p><strong>Winner:</strong> " + result.getWinner().getNameValue() + "!</p>" +
-                "<p><strong>Remaining HP:</strong> " + result.getWinner().getHealth() + "/" + PokemonData.PokemonDataMapper().get(result.getWinner().getNameValue().toLowerCase()).getHealth() + (result.getNumberOfTurnsWon() == 1 ? " Perfect!" : "") + "</p>" +
-                "<p><strong>" + result.getWinner().getNameValue() + " won in " + result.getNumberOfTurnsWon() + " turn(s)!</strong></p>" +
-                "<p><strong>" + result.getWinner().getNameValue() + (result.getWinner().isLegendary() ? " is classified as a" : " is not classified as a") + " Legendary Pokemon.</strong></p>" +
-                "<p><strong>" + result.getWinner().getNameValue() + " used " + result.getSpecialAttacksUsed() + " Special Attacks.</strong></p>" +
-                "</div>" +
-                "<div class='back-button'>" +
-                "<button class='button is-link' onclick='window.history.back()'>Back</button>" +
-                "</div>" +
-                "</div>" +
-                "</body>" +
-                "</html>";
-
-        return ResponseEntity.ok(htmlResponse);
+        ObjectMapper objectMapper = new ObjectMapper();
+        //Sending JSON instead of raw html
+        return ResponseEntity.ok(objectMapper.writerWithDefaultPrettyPrinter()
+                .writeValueAsString(result));
     }
 
 }
