@@ -3,35 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pokémon Battle Result</title>
+    <title>Pokémon Battle Result!</title>
     <link href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
     <style>
         body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Press Start 2P', cursive;
+            background-image: url('pokemonbg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             text-align: center;
-            font-family: Arial, sans-serif;
-            padding-top: 60px;
         }
+
+        .box-container {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            color: #ff0000;
+        }
+
         .battle-container {
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-top: 50px;
-            font-size: 1.5em
+            margin-top: 30px;
+            font-size: 1.2em;
         }
-        .pokemon-card {
-            margin: 20px;
+
+        .pokemon-card h1 {
+            margin-bottom: 5px;
         }
-        .pokemon-card img {
-            max-width: 150px;
+
+        .pokemon-card h2 {
+            margin-top: 0;
+            margin-bottom: 8px;
         }
+
         .result {
-            font-size: 1.4em;
+            font-size: 1.2em;
             margin-top: 30px;
         }
+
         .back-button, .refresh-button {
             margin-top: 20px;
         }
+
+        .button {
+            padding: 10px 20px;
+            background-color: #ffcb05;
+            color: #3b4cca;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        .button:hover {
+            background-color: #f7b500;
+            cursor: pointer;
+        }
+
         .pokemon-win strong {
             color: green;
         }
@@ -40,39 +90,66 @@
             color: red;
         }
 
+        .flawless-victory h4 {
+            font-size: 1.22em;
+            color: #28a745;
+            font-weight: bold;
+            margin-top: 0px;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.7),
+                         0 0 20px rgba(0, 255, 0, 0.5),
+                         0 0 30px rgba(0, 255, 0, 0.3);
+        }
+
+        .pokemon-image {
+            transition: transform 0.5s ease-in-out;
+        }
+
+        .pokemon-image:hover {
+            transform: rotate(360deg);
+        }
     </style>
 </head>
 <body>
 <div id="banner"></div>
-
-<div id="app" class="container">
-    <h1 class="title">Pokemon Battle Result!</h1>
+<div id="app" class="box-container">
+    <h1 class="title">Pokémon Battle Result!</h1>
     <div class="battle-container" v-if="battleData">
         <div class="pokemon-card">
-            <h1><strong>{{ battleData.winner.nameValue }}</strong></h1>  <div class="pokemon-win"> <h1><strong> W </strong></h1> </div>
-            <img :src="`https://img.pokemondb.net/sprites/home/normal/${battleData.winner.nameValue.toLowerCase()}.png`" :alt="battleData.winner.nameValue">
+            <h1><strong>{{ battleData.winner.nameValue }}</strong></h1>
+            <h2><strong> Gen. {{ battleData.winner.generation }}</strong></h2>
+            <div class="pokemon-win">
+                <h1><strong> Win </strong></h1>
+                <div v-if="battleData.numberOfTurnsWon === 1" class="flawless-victory">
+                    <h4><strong>Flawless Victory!</strong></h4>
+                </div>
+            </div>
+            <img :src="`https://img.pokemondb.net/sprites/home/normal/${battleData.winner.nameValue.toLowerCase()}.png`" :alt="battleData.winner.nameValue" class="pokemon-image">
         </div>
-        <img src="vs.png" alt="VS" style="width: 100px; height: 100px;">
+        <h1><strong> VS </strong></h1>
         <div class="pokemon-card">
-            <h1><strong>{{ battleData.loser.nameValue }}</strong></h1> <div class="pokemon-lose"> <h1><strong> L </strong></h1> </div>
-            <img :src="`https://img.pokemondb.net/sprites/home/normal/${battleData.loser.nameValue.toLowerCase()}.png`" :alt="battleData.loser.nameValue">
+            <h1><strong>{{ battleData.loser.nameValue }}</strong></h1>
+            <h2><strong> Gen. {{ battleData.loser.generation }}</strong></h2>
+            <div class="pokemon-lose">
+                <h1><strong> Lose </strong></h1>
+            </div>
+            <img :src="`https://img.pokemondb.net/sprites/home/normal/${battleData.loser.nameValue.toLowerCase()}.png`" :alt="battleData.loser.nameValue" class="pokemon-image">
         </div>
     </div>
     <div class="result" v-if="battleData">
         <p><strong>Winner:</strong> {{ battleData.winner.nameValue }} </p>
         <p><strong>Remaining HP:</strong> {{ battleData.remainingHealthForWinner }} </p>
         <p><strong>Turns Taken:</strong> {{ battleData.numberOfTurnsWon }}</p>
-        <p><strong>Is {{ battleData.winner.nameValue }} a Legendary Pokemon?:</strong> {{ battleData.winner.isLegendary ? 'Yes' : 'No' }}</p>
+        <p><strong>Is {{ battleData.winner.nameValue }} a Legendary Pokémon?:</strong> {{ battleData.winner.legendary ? 'Yes' : 'No' }}</p>
         <p><strong>Special Attacks Used:</strong> {{ battleData.specialAttacksUsed }}</p>
     </div>
     <div v-else class="result">
         <p>Error: {{ errorMessage }}</p>
     </div>
     <div class="refresh-button">
-        <button class="button is-link" @click="refresh">Retry</button>
+        <button class="button" @click="refresh">Retry</button>
     </div>
     <div class="back-button">
-        <button class="button is-link" @click="goBack">Back</button>
+        <button class="button" @click="goBack">Back</button>
     </div>
 </div>
 

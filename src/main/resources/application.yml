@@ -1,0 +1,6 @@
+spring:
+  config:
+    import: "classpath:secret.properties"
+  data:
+    mongodb:
+      uri: mongodb+srv://${db.username}:${db.password}@pokemoncluster.zsqja.mongodb.net/PokemonDatabase?retryWrites=true&w=majority&appName=PokemonCluster

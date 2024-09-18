@@ -25,10 +25,11 @@ public enum PokemonTypeEnum {
         return null;
     }
 
-    public static double getEffectivenessModifier(Character type1, Character type2) {
-        switch (type1) {
+    //gets the multiplier based on attacker's type and the opponent's type
+    public static double getEffectivenessModifier(PokemonTypeEnum type1, PokemonTypeEnum type2) {
+        switch (type1.getType()) {
             case 'f':
-                switch (type2) {
+                switch (type2.getType()) {
                     case 'g':
                         return 2.0;
                     case 'w':
@@ -38,7 +39,7 @@ public enum PokemonTypeEnum {
                 }
                 break;
             case 'w':
-                switch (type2) {
+                switch (type2.getType()) {
                     case 'f':
                         return 2.0;
                     case 'e', 'g':
@@ -46,7 +47,7 @@ public enum PokemonTypeEnum {
                 }
                 break;
             case 'g':
-                switch (type2) {
+                switch (type2.getType()) {
                     case 'e':
                         return 2.0;
                     case 'f':
@@ -56,7 +57,7 @@ public enum PokemonTypeEnum {
                 }
                 break;
             case 'e':
-                switch (type2) {
+                switch (type2.getType()) {
                     case 'w':
                         return 2.0;
                     case 'g':
@@ -66,6 +67,7 @@ public enum PokemonTypeEnum {
                 }
                 break;
         }
-        return 1.0; // Default effectiveness is neutral (1.0)
+        //default modifier (no multiplier applied to dmg)
+        return 1.0;
     }
 }

@@ -1,46 +1,73 @@
 <div class="banner">
     <div class="favicon-container">
-        <img src="favicon.ico" alt="Favicon" class="favicon">
-        <span class="banner-text">Pokemon Battle! by Impact.com</span>
+        <img src="pokemon_logo.png" alt="Favicon" class="favicon">
+        <span class="banner-text1">Pokémon Battle Simulator!</span>
     </div>
     <a href="https://github.com/embosi97" class="github-link" target="_blank">
-        <img src="GitHub-Symbol.png" alt="GITHUB" style="width: 45px; height: 24px;">
-        <span class="banner-text">My Github</span>
+        <img src="GitHub-Symbol.png" alt="GITHUB" class="github-icon">
+        <span class="banner-text2">My Github</span>
     </a>
 </div>
+
 <style>
     .banner {
-        background-color: #f5f5f5;
-        padding: 10px;
+        background: linear-gradient(90deg, #f5f5f5, #eaeaea);
+        padding: 15px 20px;
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
         display: flex;
         align-items: center;
-        border-bottom: 1px solid #ddd;
+        border-bottom: 2px solid #ccc;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         z-index: 1000;
     }
-    .banner .favicon-container {
+    .favicon-container {
         display: flex;
         align-items: center;
     }
-    .banner .favicon {
-        margin-right: 10px;
-        width: 24px;
-        height: 24px;
+    .favicon {
+        margin-right: 12px;
+        width: 32px;
+        height: 32px;
+        transition: transform 0.3s;
     }
-    .banner .banner-text {
-        font-size: 1.2em;
+    .favicon:hover {
+        transform: rotate(360deg);
+    }
+    .banner-text1 {
+        font-size: 1.4em;
         font-weight: bold;
+        color: #ff0000;
     }
-    .banner .github-link {
+
+    .banner-text2 {
+        font-size: 1.4em;
+        font-weight: bold;
+        color: #000000;
+    }
+
+    .github-link {
         margin-left: auto;
+        display: flex;
+        align-items: center;
         color: #333;
         text-decoration: none;
         font-size: 1.2em;
+        font-weight: bold;
+        padding: 8px 12px;
+        background-color: #f5f5f5;
+        border-radius: 5px;
+        transition: background-color 0.3s, color 0.3s;
     }
-    .banner .github-link:hover {
-        text-decoration: underline;
+    .github-link:hover {
+        background-color: #333;
+        color: #fff;
+    }
+    .github-icon {
+        margin-right: 10px;
+        width: 54px;
+        height: 32px;
     }
 </style>

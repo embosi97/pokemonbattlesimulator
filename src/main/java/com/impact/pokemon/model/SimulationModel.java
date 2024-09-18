@@ -1,18 +1,9 @@
 package com.impact.pokemon.model;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 
-@Getter
-@AllArgsConstructor
+//Use a record when an object’s only purpose is to contain public data
 @JsonAutoDetect
-public class SimulationModel {
-
-    private final PokemonModel winner;
-    private final PokemonModel loser;
-    private final int remainingHealthForWinner;
-    private final int numberOfTurnsWon;
-    private final int specialAttacksUsed;
-
+public record SimulationModel(PokemonModel winner, PokemonModel loser, int remainingHealthForWinner,
+                              int numberOfTurnsWon, int specialAttacksUsed) {
 }

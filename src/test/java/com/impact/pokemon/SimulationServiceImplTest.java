@@ -1,7 +1,9 @@
 package com.impact.pokemon;
 
+import com.impact.pokemon.enums.PokemonTypeEnum;
 import com.impact.pokemon.model.PokemonModel;
 import com.impact.pokemon.model.SimulationModel;
+import com.impact.pokemon.model.TurnWrapper;
 import com.impact.pokemon.service.SimulationServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,54 +34,32 @@ public class SimulationServiceImplTest {
 
     @Test
     public void testStartSimulation_Pokemon1Wins() {
-        PokemonModel pokemon1 = new PokemonModel();
 
-        pokemon1.setNameValue("Pikachu");
-        pokemon1.setPokemonType('e');
-        pokemon1.setHealth(735);
-        pokemon1.setAttackValue(55);
-        pokemon1.setDefenseValue(40);
-        pokemon1.setSpecialAttack(50);
-        pokemon1.setSpecialDefense(50);
-        pokemon1.setSpeedValue(90);
+        PokemonModel pokemon1 =
+                buildDummyPokemonModel("Pikachu", PokemonTypeEnum.ELECTRIC, 1000, 735, 95, 40, 50, 50, 90);
 
-        PokemonModel pokemon2 = new PokemonModel();
-        pokemon2.setNameValue("Squirtle");
-        pokemon2.setPokemonType('w');
-        pokemon2.setHealth(745);
-        pokemon2.setAttackValue(49);
-        pokemon2.setDefenseValue(49);
-        pokemon2.setSpecialAttack(65);
-        pokemon2.setSpecialDefense(65);
-        pokemon2.setSpeedValue(45);
+        PokemonModel pokemon2 =
+                buildDummyPokemonModel("Squirtle", PokemonTypeEnum.WATER, 1000, 135, 49, 40, 50, 50, 50);
+
 
         when(pokemonData.get("pikachu")).thenReturn(pokemon1);
-        when(pokemonData.get("bulbasaur")).thenReturn(pokemon2);
+        when(pokemonData.get("squirtle")).thenReturn(pokemon2);
 
         SimulationModel result = simulationService.startSimulation(pokemon1, pokemon2);
 
         assertNotNull(result);
-        assertEquals(pokemon1.getNameValue(), result.getWinner().getNameValue());
-        assertTrue(result.getLoser().getHealth() <= 0);
+        assertEquals(pokemon1.getNameValue(), result.winner().getNameValue());
+        assertTrue(result.loser().getHealth() <= 0);
     }
 
     @Test
     public void testStartSimulation_Pokemon2Wins() {
-        PokemonModel pokemon1 = new PokemonModel();
-        pokemon1.setHealth(50);
-        pokemon1.setAttackValue(30);
-        pokemon1.setDefenseValue(40);
-        pokemon1.setSpeedValue(70);
-        pokemon1.setPokemonType('f');
-        pokemon1.setNameValue("Charmander");
 
-        PokemonModel pokemon2 = new PokemonModel();
-        pokemon2.setHealth(1000);
-        pokemon2.setPokemonType('w');
-        pokemon2.setAttackValue(50);
-        pokemon2.setDefenseValue(20);
-        pokemon2.setSpeedValue(60);
-        pokemon2.setNameValue("Squirtle");
+        PokemonModel pokemon1 =
+                buildDummyPokemonModel("Charmander", PokemonTypeEnum.FIRE, 1000, 135, 35, 40, 50, 50, 20);
+
+        PokemonModel pokemon2 =
+                buildDummyPokemonModel("Squirtle", PokemonTypeEnum.WATER, 1000, 335, 85, 40, 50, 50, 1000);
 
         when(pokemonData.get("charmander")).thenReturn(pokemon1);
         when(pokemonData.get("squirtle")).thenReturn(pokemon2);
@@ -87,24 +67,55 @@ public class SimulationServiceImplTest {
         SimulationModel result = simulationService.startSimulation(pokemon1, pokemon2);
 
         assertNotNull(result);
-        assertEquals(pokemon2.getNameValue(), result.getWinner().getNameValue());
-        assertTrue(result.getLoser().getHealth() <= 0);
+        assertEquals(pokemon2.getNameValue(), result.winner().getNameValue());
+        assertTrue(result.loser().getHealth() <= 0);
     }
 
     @Test
     public void testStartSimulation_SamePokemon() {
-        PokemonModel pokemon = new PokemonModel();
-        pokemon.setHealth(100);
-        pokemon.setAttackValue(50);
-        pokemon.setDefenseValue(30);
-        pokemon.setSpeedValue(60);
-        pokemon.setPokemonType('e');
-        pokemon.setNameValue("Pikachu");
+
+        PokemonModel pokemon =
+                buildDummyPokemonModel("Pikachu", PokemonTypeEnum.ELECTRIC, 1000, 735, 95, 40, 50, 50, 90);
 
         when(pokemonData.get("pikachu")).thenReturn(pokemon);
 
         SimulationModel result = simulationService.startSimulation(pokemon, pokemon);
 
         assertNull(result);
+    }
+
+    @Test
+    public void testSwitchingTurns() {
+
+        PokemonModel pokemon1 =
+                buildDummyPokemonModel("Pikachu", PokemonTypeEnum.ELECTRIC, 1000, 735, 95, 40, 50, 50, 90);
+
+        PokemonModel pokemon2 =
+                buildDummyPokemonModel("Squirtle", PokemonTypeEnum.WATER, 1000, 135, 49, 40, 50, 50, 50);
+
+        TurnWrapper turnWrapper = new TurnWrapper(pokemon1, pokemon2);
+
+        simulationService.switchingTurns(turnWrapper);
+
+        assertEquals(turnWrapper.attacker.getNameValue(), pokemon2.getNameValue());
+        assertEquals(turnWrapper.defender.getNameValue(), pokemon1.getNameValue());
+    }
+
+
+    public PokemonModel buildDummyPokemonModel(String name, PokemonTypeEnum pokemonTypeEnum, int totalStats, int health, int attackValue,
+                                               int defenseValue, int specialAtt, int specialDef, int speed) {
+        return PokemonModel.builder()
+                .nameValue(name)
+                .pokemonType(pokemonTypeEnum)
+                .totalStats(totalStats)
+                .health(health)
+                .attackValue(attackValue)
+                .defenseValue(defenseValue)
+                .specialAttack(specialAtt)
+                .specialDefense(specialDef)
+                .speedValue(speed)
+                .generation(1)
+                .isLegendary(false)
+                .build();
     }
 }

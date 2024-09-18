@@ -1,3 +1,4 @@
+//initializes a new vue.js application
 const app = Vue.createApp({
   data() {
     return {
@@ -22,11 +23,11 @@ const app = Vue.createApp({
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
-
+        //parses the JSON response from the server into a JS object and stores it
         const data = await response.json();
 
         if (data.winner) {
-          //redirect to attack.html with query parameters
+          //redirect to attack.html with query parameters (if winner exists)
           window.location.href = `attack.html?player=${encodeURIComponent(this.player)}&computer=${encodeURIComponent(this.computer)}`;
         } else {
           this.error = 'Invalid data received from server';
@@ -39,4 +40,4 @@ const app = Vue.createApp({
   }
 });
 
-app.mount('#app');
+app.mount('#app'); //used in attack.html
