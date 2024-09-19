@@ -44,19 +44,24 @@ public class SimulationServiceImpl implements SimulationService {
             boolean useSpecialAttack = random.nextBoolean();
             double effectivenessValue = PokemonTypeEnum.getEffectivenessModifier(turnWrapper.getAttacker().getPokemonType(), turnWrapper.getDefender().getPokemonType());
             int damage;
-            boolean isCriticalHit = random.nextDouble() < 0.0625; //random chance for a critical hit (x2 damage)
+            if(effectivenessValue != 0.0) {
+                boolean isCriticalHit = random.nextDouble() < 0.0625; //random chance for a critical hit (x2 damage)
 
-            if (useSpecialAttack) {
-                specialsUsedCounter++;
-                damage = (int) (50 * (turnWrapper.getAttacker().getSpecialAttack() / (double) turnWrapper.getDefender().getSpecialDefense()) * effectivenessValue);
-            } else {
-                damage = (int) (50 * (turnWrapper.getAttacker().getAttackValue() / (double) turnWrapper.getDefender().getDefenseValue()) * effectivenessValue);
+                if (useSpecialAttack) {
+                    specialsUsedCounter++;
+                    damage = (int) (50 * (turnWrapper.getAttacker().getSpecialAttack() / (double) turnWrapper.getDefender().getSpecialDefense()) * effectivenessValue);
+                } else {
+                    damage = (int) (50 * (turnWrapper.getAttacker().getAttackValue() / (double) turnWrapper.getDefender().getDefenseValue()) * effectivenessValue);
+                }
+
+                damage = (int) (damage * (0.85 + (random.nextDouble() * 0.3))); //dmg variance like in the games (85% to 115% to increase the RNG)
+
+                if (isCriticalHit) {
+                    damage *= 2; //boom
+                }
             }
-
-            damage = (int) (damage * (0.85 + (random.nextDouble() * 0.3))); //dmg variance like in the games (85% to 115% to increase the RNG)
-
-            if (isCriticalHit) {
-                damage *= 2; //boom
+            else {
+                damage = 0;
             }
 
             turnWrapper.getDefender()

@@ -2,8 +2,11 @@ package com.impact.pokemon.model;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.impact.pokemon.enums.PokemonTypeEnum;
-import lombok.*;
-import org.bson.types.ObjectId;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -17,7 +20,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class PokemonModel {
 
     @Id
-    private ObjectId id;
+    private int pokedexNumber;
 
     private String nameValue;
 

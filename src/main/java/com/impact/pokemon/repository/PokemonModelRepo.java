@@ -11,4 +11,6 @@ public interface PokemonModelRepo extends MongoRepository<PokemonModel, Integer>
 
     Optional<PokemonModel> findByNameValue(String name);
 
+    Optional<PokemonModel> findById(int pokedexId);
+
 }

@@ -6,6 +6,7 @@ import com.impact.pokemon.model.SimulationModel;
 import com.impact.pokemon.service.SimulationServiceImpl;
 import com.opencsv.exceptions.CsvValidationException;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,9 +36,10 @@ public class PokemonController {
             @RequestParam("player") String pokemon1,
             @RequestParam("computer") String pokemon2) throws IOException, CsvValidationException {
 
-        logger.info("Retrieving Pokemon data from source!");
+        logger.info("Retrieving Pokemon data from Database!");
 
-        List<Optional<PokemonModel>> pokemonList = simService.getPokemonModelRepoService().getPokemonByName(pokemon1.toLowerCase(), pokemon2.toLowerCase());
+        List<Optional<PokemonModel>> pokemonList =
+                simService.getPokemonModelRepoService().getPokemonByName(pokemon1.toLowerCase(), pokemon2.toLowerCase());
 
         Optional<PokemonModel> pokemonModel1 = pokemonList.get(0);
         Optional<PokemonModel> pokemonModel2 = pokemonList.get(1);
@@ -47,7 +49,8 @@ public class PokemonController {
             return ResponseEntity.badRequest().body("<h1>Invalid Pokemon names provided.</h1><button onclick='window.history.back()'>Back</button>");
         }
 
-        logger.info(String.format("%s and %s enter the battle. Starting simulation!!!", pokemonModel1.get().getNameValue(), pokemonModel2.get().getNameValue()));
+        logger.info(String.format("%s and %s enter the battle. Starting simulation!",
+                StringUtils.capitalize(pokemonModel1.get().getNameValue()), StringUtils.capitalize(pokemonModel2.get().getNameValue())));
 
         SimulationModel result = simService.startSimulation(pokemonModel1.get(), pokemonModel2.get());
 
@@ -56,11 +59,13 @@ public class PokemonController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("<h1>An error occurred during the simulation.</h1><button onclick='window.history.back()'>Back</button>");
         }
 
+        logger.info(String.format("%s defeated %s with %d health points remaining!",
+               StringUtils.capitalize(result.winner().getNameValue()), StringUtils.capitalize(result.loser().getNameValue()), result.winner().getHealth()));
+
         ObjectMapper objectMapper = new ObjectMapper();
 
         //Sending JSON
         return ResponseEntity.ok(objectMapper.writerWithDefaultPrettyPrinter()
                 .writeValueAsString(result));
     }
-
 }

@@ -13,7 +13,11 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class PokemonModelRepoServiceImpl {
@@ -32,21 +36,22 @@ public class PokemonModelRepoServiceImpl {
 
     public List<Optional<PokemonModel>> getPokemonByName(String pokemon1, String pokemon2) throws CsvValidationException, IOException {
         if (!doesPokemonDataExist()) {
-            logger.info("Populated the database with Pokemon data.");
+            logger.info("Populating the database with Pokemon data.");
             populatePokemonDatabase();
         }
         return new ArrayList<>(List.of(pokemonModelRepo.findByNameValue(pokemon1.toLowerCase()), pokemonModelRepo.findByNameValue(pokemon2.toLowerCase())));
     }
 
     public void populatePokemonDatabase() throws IOException, CsvValidationException {
-        Map<String, PokemonModel> map = new HashMap<>();
-        final InputStream inputStream = PokemonModelRepoServiceImpl.class.getResourceAsStream("/data/pokemon.csv");
+        List<PokemonModel> pokemonModelList = new ArrayList<>();
+        final InputStream inputStream = PokemonModelRepoServiceImpl.class.getResourceAsStream("/data/pokemondata.csv");
         CSVReader csvReader = new CSVReader(new InputStreamReader(Objects.requireNonNull(inputStream)));
         csvReader.readNext();
         String[] nextLine;
         while ((nextLine = csvReader.readNext()) != null) {
 
             PokemonModel pokemonModel = PokemonModel.builder()
+                    .pokedexNumber(Integer.parseInt(nextLine[0]))
                     .nameValue(nextLine[1].toLowerCase())
                     .pokemonType(Objects.requireNonNull(PokemonTypeEnum.fromValue(nextLine[2].toUpperCase(Locale.ROOT))))
                     .totalStats(Integer.parseInt(nextLine[3]))
@@ -60,9 +65,9 @@ public class PokemonModelRepoServiceImpl {
                     .isLegendary(Boolean.parseBoolean(nextLine[11]))
                     .build();
 
-            map.put(pokemonModel.getNameValue().toLowerCase(), pokemonModel);
+            pokemonModelList.add(pokemonModel);
         }
-        pokemonModelRepo.saveAll(map.values());
         csvReader.close();
+        pokemonModelRepo.saveAll(pokemonModelList);
     }
 }
