@@ -1,6 +1,6 @@
 Full-stack Application: Backend built with Spring Boot, using Gradle for dependency management and MongoDB for persistence.
 
-Frontend: Retro-looking, dynamic, and beautifully designed with Vue.js and vanilla CSS for a polished, interactive user experience. Includes animations, as well.
+Frontend: Retro-looking, dynamic, and beautifully designed with Vue.js and vanilla CSS for a polished, interactive user experience. Includes animations for Pokémon and icons, as well.
 
 Features: Simulates battles between over 680 Pokémon (Gen 1-5), incorporating type matchups, stats, RNG, normal/special attack and defense mechanics.
 
