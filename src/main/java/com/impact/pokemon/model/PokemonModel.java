@@ -26,6 +26,8 @@ public class PokemonModel {
 
     private PokemonTypeEnum pokemonType;
 
+    private PokemonTypeEnum secondaryType;
+
     private int totalStats;
 
     private int health;

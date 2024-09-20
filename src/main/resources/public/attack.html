@@ -36,7 +36,7 @@
         }
 
         h1 {
-            font-size: 2em;
+            font-size: 1.75em;
             margin-bottom: 20px;
             color: #ff0000;
         }
@@ -125,6 +125,9 @@
             <h1>
                 <strong>{{ capitalizeName(battleData.winner.nameValue) }}</strong>
                 <img :src="getTypeIconUrl(battleData.winner.pokemonType)" alt="type icon" class="type-icon">
+                <img v-if="battleData.winner.secondaryType"
+                     :src="getTypeIconUrl(battleData.winner.secondaryType)"
+                     alt="secondary type icon" class="type-icon">
             </h1>
             <h2><strong> Gen. {{ battleData.winner.generation }}</strong></h2>
             <div class="pokemon-win">
@@ -141,6 +144,9 @@
             <h1>
                 <strong>{{ capitalizeName(battleData.loser.nameValue) }}</strong>
                 <img :src="getTypeIconUrl(battleData.loser.pokemonType)" alt="type icon" class="type-icon">
+                <img v-if="battleData.loser.secondaryType"
+                     :src="getTypeIconUrl(battleData.loser.secondaryType)"
+                     alt="secondary type icon" class="type-icon">
             </h1>
             <h2><strong> Gen. {{ battleData.loser.generation }}</strong></h2>
             <div class="pokemon-lose">
