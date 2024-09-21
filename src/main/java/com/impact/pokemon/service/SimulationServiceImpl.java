@@ -42,9 +42,9 @@ public class SimulationServiceImpl implements SimulationService {
         while (true) {
             numberOfTurnsWon++;
             boolean useSpecialAttack = random.nextBoolean();
-            double effectivenessValue = PokemonTypeEnum.getEffectivenessModifier(turnWrapper.getAttacker().getPokemonType(), turnWrapper.getDefender().getPokemonType());
+            double effectivenessValue = getTotalEffectivenessValue(turnWrapper.getAttacker(), turnWrapper.getDefender());
             int damage;
-            if(effectivenessValue != 0.0) {
+            if (effectivenessValue != 0.0) {
                 boolean isCriticalHit = random.nextDouble() < 0.0625; //random chance for a critical hit (x2 damage)
 
                 if (useSpecialAttack) {
@@ -59,8 +59,7 @@ public class SimulationServiceImpl implements SimulationService {
                 if (isCriticalHit) {
                     damage *= 2; //boom
                 }
-            }
-            else {
+            } else {
                 damage = 0;
             }
 
@@ -94,6 +93,39 @@ public class SimulationServiceImpl implements SimulationService {
             }
         }
         return turnWrapper;
+    }
+
+    public double getTotalEffectivenessValue(PokemonModel attacker, PokemonModel defender) {
+
+        double totalEffectiveness = 1.0;
+
+        //Primary vs Primary
+        totalEffectiveness *= PokemonTypeEnum.getEffectivenessModifier(
+                attacker.getPokemonType(),
+                defender.getPokemonType());
+
+        //Primary vs Secondary
+        if (defender.getSecondaryType() != null) {
+            totalEffectiveness *= PokemonTypeEnum.getEffectivenessModifier(
+                    attacker.getPokemonType(),
+                    defender.getSecondaryType());
+        }
+
+        //If there's a secondary type for the attacking Pokemon, calculate its effectiveness against the defender's attributes
+        if (attacker.getSecondaryType() != null) {
+            //Secondary vs Primary
+            totalEffectiveness *= PokemonTypeEnum.getEffectivenessModifier(
+                    attacker.getSecondaryType(),
+                    defender.getPokemonType());
+
+            //Secondary vs Secondary, if applicable
+            if (defender.getSecondaryType() != null) {
+                totalEffectiveness *= PokemonTypeEnum.getEffectivenessModifier(
+                        attacker.getSecondaryType(),
+                        defender.getSecondaryType());
+            }
+        }
+        return totalEffectiveness;
     }
 
     public void switchingTurns(TurnWrapper turnWrapper) {

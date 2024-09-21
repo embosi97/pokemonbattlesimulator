@@ -13,12 +13,22 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class PokemonModelRepoServiceImpl {
 
     private static final Logger logger = LoggerFactory.getLogger(PokemonModelRepoServiceImpl.class);
+
     private final PokemonModelRepo pokemonModelRepo;
 
     @Autowired
@@ -27,15 +37,37 @@ public class PokemonModelRepoServiceImpl {
     }
 
     private boolean doesPokemonDataExist() {
-        return pokemonModelRepo.count() > 0;
+        return pokemonModelRepo.count() <= 0;
     }
 
     public List<Optional<PokemonModel>> getPokemonByName(String pokemon1, String pokemon2) throws CsvValidationException, IOException {
-        if (!doesPokemonDataExist()) {
+        if (doesPokemonDataExist()) {
             logger.info("Populating the database with Pokemon data.");
             populatePokemonDatabase();
         }
-        return new ArrayList<>(List.of(pokemonModelRepo.findByNameValue(pokemon1.toLowerCase()), pokemonModelRepo.findByNameValue(pokemon2.toLowerCase())));
+        return Stream.of(pokemon1, pokemon2)
+                .map(pokemonModelRepo::findByNameValue)
+                .collect(Collectors.toList());
+    }
+
+    public List<Optional<PokemonModel>> getRandomPokemon() throws CsvValidationException, IOException {
+        if (doesPokemonDataExist()) {
+            logger.info("Populating the database with Pokemon data.");
+            populatePokemonDatabase();
+        }
+        int dbCount = (int) pokemonModelRepo.count();
+        Random random = new Random();
+
+        Set<Integer> randomIds = new HashSet<>();
+
+        //2 unique values
+        while (randomIds.size() < 2) {
+            randomIds.add(random.nextInt(dbCount) + 1);
+        }
+
+        return randomIds.stream()
+                .map(pokemonModelRepo::findById)
+                .collect(Collectors.toList());
     }
 
     public void populatePokemonDatabase() throws IOException, CsvValidationException {
