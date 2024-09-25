@@ -1,5 +1,6 @@
 package com.impact.pokemon.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.impact.pokemon.enums.PokemonTypeEnum;
 import com.impact.pokemon.model.PokemonModel;
 import com.impact.pokemon.repository.PokemonModelRepo;

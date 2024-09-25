@@ -4,6 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum PokemonTypeEnum {
+
     //Supported Pokemon types (Generation 1 to 5)
     NORMAL('n'),
     FIRE('f'),
@@ -24,15 +25,15 @@ public enum PokemonTypeEnum {
     STEEL('l'),
     FAIRY('x');
 
-    private final Character type;
+    private final char type;
 
-    PokemonTypeEnum(Character type) {
+    PokemonTypeEnum(char type) {
         this.type = type;
     }
 
     public static PokemonTypeEnum fromValue(String key) {
         for (PokemonTypeEnum se : PokemonTypeEnum.values()) {
-            if (se.name().equals(key)) {
+            if (se.name().equalsIgnoreCase(key)) {
                 return se;
             }
         }
@@ -40,247 +41,236 @@ public enum PokemonTypeEnum {
     }
 
     //Gets the multiplier based on attacker's type and the opponent's type
-    public static double getEffectivenessModifier(PokemonTypeEnum type1, PokemonTypeEnum type2) {
-        switch (type1.getType()) {
-            case 'n': //Normal
-                switch (type2.getType()) {
-                    case 'k':
-                    case 'l':
+    public static double getEffectivenessModifier(PokemonTypeEnum attacker, PokemonTypeEnum defender) {
+        switch (attacker.getType()) {
+            case 'n': // Normal
+                switch (defender.getType()) {
+                    case 'k': // Rock
+                    case 'l': // Steel
                         return 0.5;
-                    case 'h':
+                    case 'h': // Ghost
                         return 0.0;
                 }
                 break;
-            case 'f': //Fire
-                switch (type2.getType()) {
-                    case 'r':
-                    case 'i':
-                    case 'b':
-                    case 'l':
+            case 'f': // Fire
+                switch (defender.getType()) {
+                    case 'r': // Grass
+                    case 'i': // Ice
+                    case 'b': // Bug
+                    case 'l': // Steel
                         return 2.0;
-                    case 'k':
-                    case 'f':
-                    case 'w':
-                    case 'j':
-                    case 'x':
+                    case 'f': // Fire
+                    case 'w': // Water
+                    case 'k': // Rock
+                    case 'j': // Dragon
                         return 0.5;
                 }
                 break;
-            case 'w': //Water
-                switch (type2.getType()) {
-                    case 'f':
-                    case 'r':
-                    case 'k':
+            case 'w': // Water
+                switch (defender.getType()) {
+                    case 'f': // Fire
+                    case 'd': // Ground
+                    case 'k': // Rock
                         return 2.0;
-                    case 'w':
-                    case 'j':
-                    case 'l':
+                    case 'w': // Water
+                    case 'r': // Grass
+                    case 'j': // Dragon
                         return 0.5;
                 }
                 break;
-            case 'r': //Grass
-                switch (type2.getType()) {
-                    case 'w':
-                    case 'd':
-                    case 'k':
+            case 'r': // Grass
+                switch (defender.getType()) {
+                    case 'w': // Water
+                    case 'd': // Ground
+                    case 'k': // Rock
                         return 2.0;
-                    case 'f':
-                    case 'r':
-                    case 'y':
-                    case 'p':
-                    case 'b':
-                    case 'l':
+                    case 'f': // Fire
+                    case 'r': // Grass
+                    case 'y': // Flying
+                    case 'p': // Poison
+                    case 'b': // Bug
+                    case 'l': // Steel
                         return 0.5;
                 }
                 break;
-            case 'e': //Electric
-                switch (type2.getType()) {
-                    case 'w':
-                    case 'y':
+            case 'e': // Electric
+                switch (defender.getType()) {
+                    case 'w': // Water
+                    case 'y': // Flying
                         return 2.0;
-                    case 'd':
+                    case 'd': // Ground
                         return 0.0;
-                    case 'r':
-                    case 'j':
-                    case 'e':
-                    case 'l':
+                    case 'r': // Grass
+                    case 'j': // Dragon
+                    case 'e': // Electric
                         return 0.5;
                 }
                 break;
-            case 'i': //Ice
-                switch (type2.getType()) {
-                    case 'r':
-                    case 'd':
-                    case 'y':
-                    case 'j':
+            case 'i': // Ice
+                switch (defender.getType()) {
+                    case 'r': // Grass
+                    case 'd': // Ground
+                    case 'y': // Flying
+                    case 'j': // Dragon
                         return 2.0;
-                    case 'f':
-                    case 'w':
-                    case 'i':
-                    case 'l':
+                    case 'f': // Fire
+                    case 'w': // Water
+                    case 'i': // Ice
+                    case 'l': // Steel
                         return 0.5;
                 }
                 break;
-            case 't': //Fighting
-                switch (type2.getType()) {
-                    case 'n':
-                    case 'k':
-                    case 'l':
-                    case 'a':
+            case 't': // Fighting
+                switch (defender.getType()) {
+                    case 'n': // Normal
+                    case 'k': // Rock
+                    case 'l': // Steel
+                    case 'a': // Dark
                         return 2.0;
-                    case 'p':
-                    case 'y':
-                    case 'b':
-                    case 'x':
+                    case 'p': // Poison
+                    case 'y': // Flying
+                    case 'b': // Bug
+                    case 'x': // Fairy
                         return 0.5;
-                    case 'h':
+                    case 'h': // Ghost
                         return 0.0;
                 }
                 break;
-            case 'p': //Poison
-                switch (type2.getType()) {
-                    case 'r':
-                    case 'x':
+            case 'p': // Poison
+                switch (defender.getType()) {
+                    case 'r': // Grass
+                    case 'x': // Fairy
                         return 2.0;
-                    case 'p':
-                    case 'g':
-                    case 'k':
-                    case 'l':
-                    case 'b':
+                    case 'p': // Poison
+                    case 'g': // Ground
+                    case 'k': // Rock
+                    case 'l': // Steel
                         return 0.5;
-                    case 'd':
+                }
+                break;
+            case 'd': // Ground
+                switch (defender.getType()) {
+                    case 'f': // Fire
+                    case 'e': // Electric
+                    case 'k': // Rock
+                    case 'p': // Poison
+                        return 2.0;
+                    case 'r': // Grass
+                    case 'b': // Bug
+                        return 0.5;
+                    case 'y': // Flying
                         return 0.0;
                 }
                 break;
-            case 'd': //Ground
-                switch (type2.getType()) {
-                    case 'f':
-                    case 'e':
-                    case 'k':
-                    case 'p':
+            case 'y': // Flying
+                switch (defender.getType()) {
+                    case 'r': // Grass
+                    case 'b': // Bug
+                    case 'p': // Fighting
+                    case 'k': // Rock
                         return 2.0;
-                    case 'r':
-                    case 'b':
+                    case 'e': // Electric
+                    case 'l': // Steel
                         return 0.5;
-                    case 'y':
+                }
+                break;
+            case 's': // Psychic
+                switch (defender.getType()) {
+                    case 't': // Fighting
+                    case 'p': // Poison
+                        return 2.0;
+                    case 's': // Psychic
+                    case 'l': // Steel
+                        return 0.5;
+                    case 'a': // Dark
                         return 0.0;
                 }
                 break;
-            case 'y': //Flying
-                switch (type2.getType()) {
-                    case 'r':
-                    case 'b':
-                    case 'p':
+            case 'b': // Bug
+                switch (defender.getType()) {
+                    case 'r': // Grass
+                    case 'p': // Psychic
+                    case 'a': // Dark
                         return 2.0;
-                    case 'k':
-                    case 'e':
-                    case 'l':
+                    case 'f': // Fire
+                    case 'y': // Flying
+                    case 'k': // Rock
+                        return 0.5;
+                    case 'h': // Ghost
                         return 0.5;
                 }
                 break;
-            case 's': //Psychic
-                switch (type2.getType()) {
-                    case 't':
-                    case 'p':
-                    case 'b':
+            case 'k': // Rock
+                switch (defender.getType()) {
+                    case 'f': // Fire
+                    case 'i': // Ice
+                    case 'y': // Flying
+                    case 'b': // Bug
                         return 2.0;
-                    case 's':
-                    case 'l':
+                    case 'k': // Rock
+                    case 'g': // Ground
                         return 0.5;
-                    case 'a':
+                }
+                break;
+            case 'h': // Ghost
+                switch (defender.getType()) {
+                    case 's': // Psychic
+                    case 'h': // Ghost
+                        return 2.0;
+                    case 'n': // Normal
                         return 0.0;
+                    case 'd': // Dark
+                        return 0.5;
                 }
                 break;
-            case 'b': //Bug
-                switch (type2.getType()) {
-                    case 'r':
-                    case 'p':
-                    case 's':
-                    case 'x':
+            case 'j': // Dragon
+                switch (defender.getType()) {
+                    case 'j': // Dragon
                         return 2.0;
-                    case 'f':
-                    case 'y':
-                    case 'k':
-                    case 'b':
-                    case 'l':
-                        return 0.5;
-                    case 'h':
+                    case 'x': // Fairy
                         return 0.0;
-                }
-                break;
-            case 'k': //Rock
-                switch (type2.getType()) {
-                    case 'f':
-                    case 'i':
-                    case 'y':
-                    case 'b':
-                    case 'l':
-                        return 2.0;
-                    case 'k':
-                    case 'g':
+                    case 'l': // Steel
                         return 0.5;
                 }
                 break;
-            case 'h': //Ghost
-                switch (type2.getType()) {
-                    case 's':
-                    case 'h':
+            case 'a': // Dark
+                switch (defender.getType()) {
+                    case 's': // Psychic
+                    case 'h': // Ghost
                         return 2.0;
-                    case 'd':
-                        return 0.0;
-                    case 'l':
+                    case 't': // Fighting
+                    case 'a': // Dark
+                    case 'x': // Fairy
                         return 0.5;
                 }
                 break;
-            case 'j': //Dragon
-                switch (type2.getType()) {
-                    case 'j', 'l':
-                        return 0.5;
-                    case 'x':
-                        return 0.0;
-                }
-                break;
-            case 'a': //Dark
-                switch (type2.getType()) {
-                    case 's':
-                    case 'h':
+            case 'l': // Steel
+                switch (defender.getType()) {
+                    case 'r': // Grass
+                    case 'i': // Ice
+                    case 'x': // Fairy
                         return 2.0;
-                    case 't':
-                    case 'a':
-                    case 'x':
+                    case 'f': // Fire
+                    case 'w': // Water
+                    case 'e': // Electric
+                    case 'l': // Steel
                         return 0.5;
                 }
                 break;
-            case 'l': //Steel
-                switch (type2.getType()) {
-                    case 'r':
-                    case 'i':
-                    case 'x':
+            case 'x': // Fairy
+                switch (defender.getType()) {
+                    case 't': // Fighting
+                    case 'd': // Dragon
+                    case 'a': // Dark
                         return 2.0;
-                    case 'f':
-                    case 'w':
-                    case 'e':
-                    case 'l':
-                    case 'j':
-                        return 0.5;
-                    case 'd':
-                        return 0.0;
-                }
-                break;
-            case 'x': //Fairy
-                switch (type2.getType()) {
-                    case 't':
-                    case 'd':
-                    case 'a':
-                        return 2.0;
-                    case 'f':
-                    case 'p':
-                    case 'l':
+                    case 'f': // Fire
+                    case 'p': // Poison
+                    case 'l': // Steel
                         return 0.5;
                 }
                 break;
         }
-        //Default modifier
+        // Default modifier
         return 1.0;
     }
 }
