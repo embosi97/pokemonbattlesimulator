@@ -5,6 +5,7 @@ import com.impact.pokemon.model.PokemonModel;
 import com.impact.pokemon.model.SimulationModel;
 import com.impact.pokemon.model.TurnWrapper;
 import com.impact.pokemon.service.SimulationServiceImpl;
+import com.mashape.unirest.http.exceptions.UnirestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -33,7 +34,7 @@ public class SimulationServiceImplTest {
     }
 
     @Test
-    public void testStartSimulation_Pokemon1Wins() {
+    public void testStartSimulation_Pokemon1Wins() throws UnirestException {
 
         PokemonModel pokemon1 =
                 buildDummyPokemonModel("Pikachu", PokemonTypeEnum.ELECTRIC, 1000, 735, 95, 40, 50, 50, 90);
@@ -53,7 +54,7 @@ public class SimulationServiceImplTest {
     }
 
     @Test
-    public void testStartSimulation_Pokemon2Wins() {
+    public void testStartSimulation_Pokemon2Wins() throws UnirestException {
 
         PokemonModel pokemon1 =
                 buildDummyPokemonModel("Charmander", PokemonTypeEnum.FIRE, 1000, 135, 35, 40, 50, 50, 20);
@@ -72,7 +73,7 @@ public class SimulationServiceImplTest {
     }
 
     @Test
-    public void testStartSimulation_SamePokemon() {
+    public void testStartSimulation_SamePokemon() throws UnirestException {
 
         PokemonModel pokemon =
                 buildDummyPokemonModel("Pikachu", PokemonTypeEnum.ELECTRIC, 1000, 735, 95, 40, 50, 50, 90);

@@ -3,6 +3,7 @@ package com.impact.pokemon.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.impact.pokemon.model.PokemonModel;
 import com.impact.pokemon.model.SimulationModel;
+import com.impact.pokemon.service.PokemonMoveFetcher;
 import com.impact.pokemon.service.SimulationServiceImpl;
 import com.opencsv.exceptions.CsvValidationException;
 import lombok.AllArgsConstructor;
@@ -31,6 +32,9 @@ public class PokemonController {
     @Autowired
     private final SimulationServiceImpl simService;
 
+    @Autowired
+    private final PokemonMoveFetcher pokemonMoveFetcher;
+
     @GetMapping("/attack")
     public ResponseEntity<String> simulateBattle(
             @RequestParam("player") String pokemon1,
@@ -44,10 +48,14 @@ public class PokemonController {
         Optional<PokemonModel> pokemonModel1 = pokemonList.get(0);
         Optional<PokemonModel> pokemonModel2 = pokemonList.get(1);
 
+
+
         if (pokemonModel1.isEmpty() || pokemonModel2.isEmpty()) {
             logger.error("One or both Pokemon names are invalid: " + pokemon1 + ", " + pokemon2);
             return ResponseEntity.badRequest().body("<h1>Invalid Pokemon names provided.</h1><button onclick='window.history.back()'>Back</button>");
         }
+
+//        pokemonMoveFetcher.fetchMovesForPokemon(pokemonModel1.get());
 
         logger.info(String.format("%s and %s enter the battle. Starting simulation!",
                 StringUtils.capitalize(pokemonModel1.get().getNameValue()), StringUtils.capitalize(pokemonModel2.get().getNameValue())));
