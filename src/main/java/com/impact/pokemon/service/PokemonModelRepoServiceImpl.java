@@ -55,12 +55,12 @@ public class PokemonModelRepoServiceImpl {
             logger.info("Populating the database with Pokemon data.");
             populatePokemonDatabase();
         }
-        int dbCount = (int) pokemonModelRepo.count();
+        int dbCount = Long.valueOf(pokemonModelRepo.count()).intValue();
         Random random = new Random();
 
         Set<Integer> randomIds = new HashSet<>();
 
-        //2 unique values
+        //2 unique id values
         while (randomIds.size() < 2) {
             randomIds.add(random.nextInt(dbCount) + 1);
         }

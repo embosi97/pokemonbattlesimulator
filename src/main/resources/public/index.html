@@ -87,6 +87,13 @@
     <div class="control">
         <button class="button" v-on:click="redirectToBattle">Battle!</button>
     </div>
+    <div class="control">
+        <button class="button"
+                v-on:click="redirectToRandomBattle"
+                :disabled="disableButton">
+            {{ loading ? 'Loading...' : 'Randomized Battle!' }}
+        </button>
+    </div>
     <div v-if="error" class="notification is-danger">
         {{ error }}
     </div>

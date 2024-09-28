@@ -36,8 +36,31 @@ const app = Vue.createApp({
         //handle any errors (network errors, invalid JSON, etc.)
         this.error = `Error: ${error.message}`;
       }
-    }
+    },
+        async redirectToRandomBattle() {
+               this.error = null;
+
+               try {
+                   //Redirect immediately to random.html
+                   window.location.href = `random.html`;
+
+                   const response = await fetch(`/attack/random`);
+
+                   if (!response.ok) {
+                       throw new Error('Network response was not ok');
+                   }
+
+                   //Parse the JSON response from the server
+                   const data = await response.json();
+
+                   if (!data.winner) {
+                       console.error('Invalid data received from server');
+                   }
+               } catch (error) {
+                   console.error(`Error: ${error.message}`);
+               }
+          }
   }
 });
 
-app.mount('#app'); //used in attack.html
+app.mount('#app'); //used in attack.html and random.html
