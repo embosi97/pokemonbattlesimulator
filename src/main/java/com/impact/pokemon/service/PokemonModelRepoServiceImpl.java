@@ -40,7 +40,7 @@ public class PokemonModelRepoServiceImpl {
         return pokemonModelRepo.count() <= 0;
     }
 
-    public List<Optional<PokemonModel>> getPokemonByName(String pokemon1, String pokemon2) throws CsvValidationException, IOException {
+    public List<Optional<PokemonModel>> getPokemonByName(String pokemon1, String pokemon2) {
         if (doesPokemonDataExist()) {
             logger.info("Populating the database with Pokemon data.");
             populatePokemonDatabase();
@@ -50,7 +50,7 @@ public class PokemonModelRepoServiceImpl {
                 .collect(Collectors.toList());
     }
 
-    public List<Optional<PokemonModel>> getRandomPokemon() throws CsvValidationException, IOException {
+    public List<Optional<PokemonModel>> getRandomPokemon() {
         if (doesPokemonDataExist()) {
             logger.info("Populating the database with Pokemon data.");
             populatePokemonDatabase();
@@ -70,33 +70,42 @@ public class PokemonModelRepoServiceImpl {
                 .collect(Collectors.toList());
     }
 
-    public void populatePokemonDatabase() throws IOException, CsvValidationException {
+    public void populatePokemonDatabase() {
         List<PokemonModel> pokemonModelList = new ArrayList<>();
         final InputStream inputStream = PokemonModelRepoServiceImpl.class.getResourceAsStream("/data/pokemongen1to5.csv");
         CSVReader csvReader = new CSVReader(new InputStreamReader(Objects.requireNonNull(inputStream)));
-        csvReader.readNext();
-        String[] nextLine;
-        while ((nextLine = csvReader.readNext()) != null) {
 
-            PokemonModel pokemonModel = PokemonModel.builder()
-                    .pokedexNumber(Integer.parseInt(nextLine[0]))
-                    .nameValue(nextLine[1].toLowerCase())
-                    .pokemonType(Objects.requireNonNull(PokemonTypeEnum.fromValue(nextLine[2].toUpperCase(Locale.ROOT))))
-                    .secondaryType(returnSecondaryEnum(nextLine[3].toUpperCase(Locale.ROOT)))
-                    .totalStats(Integer.parseInt(nextLine[4]))
-                    .health(Integer.parseInt(nextLine[5]))
-                    .attackValue(Integer.parseInt(nextLine[6]))
-                    .defenseValue(Integer.parseInt(nextLine[7]))
-                    .specialAttack(Integer.parseInt(nextLine[8]))
-                    .specialDefense(Integer.parseInt(nextLine[9]))
-                    .speedValue(Integer.parseInt(nextLine[10]))
-                    .generation(Integer.parseInt(nextLine[11]))
-                    .isLegendary(Boolean.parseBoolean(nextLine[12]))
-                    .build();
+        try {
 
-            pokemonModelList.add(pokemonModel);
+            csvReader.readNext();
+
+            String[] nextLine;
+            while ((nextLine = csvReader.readNext()) != null) {
+
+                PokemonModel pokemonModel = PokemonModel.builder()
+                        .pokedexNumber(Integer.parseInt(nextLine[0]))
+                        .nameValue(nextLine[1].toLowerCase())
+                        .pokemonType(Objects.requireNonNull(PokemonTypeEnum.fromValue(nextLine[2].toUpperCase(Locale.ROOT))))
+                        .secondaryType(returnSecondaryEnum(nextLine[3].toUpperCase(Locale.ROOT)))
+                        .totalStats(Integer.parseInt(nextLine[4]))
+                        .health(Integer.parseInt(nextLine[5]))
+                        .attackValue(Integer.parseInt(nextLine[6]))
+                        .defenseValue(Integer.parseInt(nextLine[7]))
+                        .specialAttack(Integer.parseInt(nextLine[8]))
+                        .specialDefense(Integer.parseInt(nextLine[9]))
+                        .speedValue(Integer.parseInt(nextLine[10]))
+                        .generation(Integer.parseInt(nextLine[11]))
+                        .isLegendary(Boolean.parseBoolean(nextLine[12]))
+                        .build();
+
+                pokemonModelList.add(pokemonModel);
+            }
+
+            csvReader.close();
+
+        } catch (IOException | CsvValidationException e) {
+            throw new RuntimeException(e);
         }
-        csvReader.close();
         pokemonModelRepo.saveAll(pokemonModelList);
     }
 
