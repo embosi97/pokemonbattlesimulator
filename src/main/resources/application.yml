@@ -4,5 +4,9 @@ spring:
   data:
     mongodb:
       uri: mongodb+srv://${db.username}:${db.password}@pokemoncluster.zsqja.mongodb.net/PokemonDatabase?retryWrites=true&w=majority&appName=PokemonCluster
+  data-movesets:
+    mongodb:
+      uri: mongodb+srv://${db.username}:${db.password}@pokemonmoveset.cqmaaw9.mongodb.net/PokemonDatabase?retryWrites=true&w=majority&appName=PokemonMoveset
+
 pokeApi:
   url: https://pokeapi.co/api/v2/pokemon/

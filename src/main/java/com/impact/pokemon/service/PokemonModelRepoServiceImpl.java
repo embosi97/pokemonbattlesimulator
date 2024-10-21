@@ -21,6 +21,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -71,42 +75,70 @@ public class PokemonModelRepoServiceImpl {
     }
 
     public void populatePokemonDatabase() {
-        List<PokemonModel> pokemonModelList = new ArrayList<>();
+
         final InputStream inputStream = PokemonModelRepoServiceImpl.class.getResourceAsStream("/data/pokemongen1to5.csv");
         CSVReader csvReader = new CSVReader(new InputStreamReader(Objects.requireNonNull(inputStream)));
 
+        List<PokemonModel> pokemonModelList = new ArrayList<>();
+
         try {
+            csvReader.readNext(); //skip header
 
-            csvReader.readNext();
-
+            //read all lines into a list
+            List<String[]> allLines = new ArrayList<>();
             String[] nextLine;
             while ((nextLine = csvReader.readNext()) != null) {
-
-                PokemonModel pokemonModel = PokemonModel.builder()
-                        .pokedexNumber(Integer.parseInt(nextLine[0]))
-                        .nameValue(nextLine[1].toLowerCase())
-                        .pokemonType(Objects.requireNonNull(PokemonTypeEnum.fromValue(nextLine[2].toUpperCase(Locale.ROOT))))
-                        .secondaryType(returnSecondaryEnum(nextLine[3].toUpperCase(Locale.ROOT)))
-                        .totalStats(Integer.parseInt(nextLine[4]))
-                        .health(Integer.parseInt(nextLine[5]))
-                        .attackValue(Integer.parseInt(nextLine[6]))
-                        .defenseValue(Integer.parseInt(nextLine[7]))
-                        .specialAttack(Integer.parseInt(nextLine[8]))
-                        .specialDefense(Integer.parseInt(nextLine[9]))
-                        .speedValue(Integer.parseInt(nextLine[10]))
-                        .generation(Integer.parseInt(nextLine[11]))
-                        .isLegendary(Boolean.parseBoolean(nextLine[12]))
-                        .build();
-
-                pokemonModelList.add(pokemonModel);
+                allLines.add(nextLine);
             }
 
             csvReader.close();
 
+            //thread pool
+            ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+            List<Future<PokemonModel>> futures = new ArrayList<>();
+
+            for (String[] line : allLines) {
+                futures.add(executor.submit(() -> createPokemonModel(line)));
+            }
+
+            //results from futures
+            for (Future<PokemonModel> future : futures) {
+                try {
+                    PokemonModel pokemonModel = future.get();
+                    if (pokemonModel != null) {
+                        pokemonModelList.add(pokemonModel);
+                    }
+                } catch (InterruptedException | ExecutionException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            executor.shutdown();
+
         } catch (IOException | CsvValidationException e) {
             throw new RuntimeException(e);
         }
+
         pokemonModelRepo.saveAll(pokemonModelList);
+    }
+
+    //using Lombok's builder method
+    private PokemonModel createPokemonModel(String[] line) {
+        return PokemonModel.builder()
+                .pokedexNumber(Integer.parseInt(line[0]))
+                .nameValue(line[1].toLowerCase())
+                .pokemonType(Objects.requireNonNull(PokemonTypeEnum.fromValue(line[2].toUpperCase(Locale.ROOT))))
+                .secondaryType(returnSecondaryEnum(line[3].toUpperCase(Locale.ROOT)))
+                .totalStats(Integer.parseInt(line[4]))
+                .health(Integer.parseInt(line[5]))
+                .attackValue(Integer.parseInt(line[6]))
+                .defenseValue(Integer.parseInt(line[7]))
+                .specialAttack(Integer.parseInt(line[8]))
+                .specialDefense(Integer.parseInt(line[9]))
+                .speedValue(Integer.parseInt(line[10]))
+                .generation(Integer.parseInt(line[11]))
+                .isLegendary(Boolean.parseBoolean(line[12]))
+                .build();
     }
 
     public Optional<PokemonTypeEnum> checkSecondaryType(String secondaryType) {

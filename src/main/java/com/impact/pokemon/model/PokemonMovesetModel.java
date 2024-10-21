@@ -5,6 +5,7 @@ import com.impact.pokemon.enums.PokemonTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.persistence.Id;
 
@@ -12,10 +13,11 @@ import javax.persistence.Id;
 @Getter
 @Builder
 @JsonAutoDetect
+@Document(collection = "PokemonMovesetCollection")
 public class PokemonMovesetModel {
 
     @Id
-    private Long id;
+    private int id;
 
     private int pokedexNumber;
 
