@@ -86,7 +86,6 @@ public class PokemonMoveFetcher {
 
         //collect the results from the futures
         List<PokemonMovesetModel> moveDetailsList = new ArrayList<>();
-
         for (Future<PokemonMovesetModel> future : futures) {
             try {
                 PokemonMovesetModel moveDetail = future.get();

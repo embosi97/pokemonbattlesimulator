@@ -53,8 +53,6 @@ public class PokemonController {
             return ResponseEntity.badRequest().body("<h1>Invalid Pokemon names provided.</h1><button onclick='window.history.back()'>Back</button>");
         }
 
-//        pokemonMoveFetcher.fetchMovesForPokemon(pokemonModel1.get());
-
         logger.info(String.format("%s and %s enter the battle. Starting simulation!",
                 StringUtils.capitalize(pokemonModel1.get().getNameValue()), StringUtils.capitalize(pokemonModel2.get().getNameValue())));
 
@@ -94,8 +92,6 @@ public class PokemonController {
             logger.error("There was a failure in the database");
             return ResponseEntity.badRequest().body("<h1>There was a failure in the database. Please try again.</h1><button onclick='window.history.back()'>Back</button>");
         }
-
-//        pokemonMoveFetcher.fetchMovesForPokemon(pokemonModel1.get());
 
         logger.info(String.format("%s and %s enter the battle. Starting simulation!",
                 StringUtils.capitalize(pokemonModel1.get().getNameValue()), StringUtils.capitalize(pokemonModel2.get().getNameValue())));

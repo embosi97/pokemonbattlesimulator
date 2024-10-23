@@ -41,7 +41,7 @@ public class PokemonModelRepoServiceImpl {
     }
 
     private boolean doesPokemonDataExist() {
-        return pokemonModelRepo.count() <= 0;
+        return pokemonModelRepo.count() == 0;
     }
 
     public List<Optional<PokemonModel>> getPokemonByName(String pokemon1, String pokemon2) {
@@ -74,7 +74,7 @@ public class PokemonModelRepoServiceImpl {
                 .collect(Collectors.toList());
     }
 
-    public void populatePokemonDatabase() {
+    private void populatePokemonDatabase() {
 
         final InputStream inputStream = PokemonModelRepoServiceImpl.class.getResourceAsStream("/data/pokemongen1to5.csv");
         CSVReader csvReader = new CSVReader(new InputStreamReader(Objects.requireNonNull(inputStream)));
@@ -82,6 +82,7 @@ public class PokemonModelRepoServiceImpl {
         List<PokemonModel> pokemonModelList = new ArrayList<>();
 
         try {
+
             csvReader.readNext(); //skip header
 
             //read all lines into a list
@@ -141,7 +142,7 @@ public class PokemonModelRepoServiceImpl {
                 .build();
     }
 
-    public Optional<PokemonTypeEnum> checkSecondaryType(String secondaryType) {
+    private Optional<PokemonTypeEnum> checkSecondaryType(String secondaryType) {
         if (secondaryType.equalsIgnoreCase("NULL")) {
             return Optional.empty();
         } else {
@@ -149,7 +150,7 @@ public class PokemonModelRepoServiceImpl {
         }
     }
 
-    public PokemonTypeEnum returnSecondaryEnum(String secondaryType) {
+    private PokemonTypeEnum returnSecondaryEnum(String secondaryType) {
         return checkSecondaryType(secondaryType).orElse(null);
     }
 }
