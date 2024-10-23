@@ -6,7 +6,7 @@ Features: Simulates battles between over 680 Pokémon (Gen 1-5), incorporating t
 Simulation retrieves the moveset for each individual Pokémon using moves.json and MongoDB.
 Includes comprehensive battle logic to accurately determine the winning Pokémon based on the 2 Pokémons' stats, types, move sets, as well as a degree of randomness (damage variance, possibility for critical hits, which attacks they choose, hit accuracy, and etc.).
 
-Modern Development: Leverages modern libraries like Lombok for clean code and includes comprehensive unit tests for robust code coverage.
+Modern Development: Leverages modern libraries like Lombok for clean code and includes comprehensive unit tests for robust code coverage. Utilizes multithreading for improved performance and speed.
 
 Scalable: Future expansion planned to include additional Pokémon generations and types.
 
