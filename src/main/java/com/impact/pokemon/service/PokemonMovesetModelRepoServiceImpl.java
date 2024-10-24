@@ -9,13 +9,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
+import javax.annotation.PostConstruct;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -42,13 +43,16 @@ public class PokemonMovesetModelRepoServiceImpl {
         return pokemonMovesetRepo.count() == 0;
     }
 
-    public Map<Integer, List<PokemonMovesetModel>> getPokemonMovesetsByPokedex(PokemonModel pokemonModel1,
-                                                                               PokemonModel pokemonModel2) {
+    @PostConstruct
+    public void init() {
         if (isPokemonMoveSetDataEmpty()) {
-            logger.info("Populating the database with Pokemon Move Set data.");
+            logger.info("Populating the database with Pokemon Move Set data on startup.");
             populateMoveSetDatabase(pokemonModelRepo.findAll());
         }
+    }
 
+    public Map<Integer, List<PokemonMovesetModel>> getPokemonMovesetsByPokedex(PokemonModel pokemonModel1,
+                                                                               PokemonModel pokemonModel2) {
         //retrieve move sets for both Pokemon
         return Stream.of(pokemonModel1.getPokedexNumber(), pokemonModel2.getPokedexNumber())
                 .collect(Collectors.toMap(
@@ -59,41 +63,61 @@ public class PokemonMovesetModelRepoServiceImpl {
 
     private void populateMoveSetDatabase(List<PokemonModel> pokemonModelList) {
 
+        //batch size
+        final int batchSize = 2;
+
+        //fixed thread pool
         ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
-        List<Future<List<PokemonMovesetModel>>> futures = new ArrayList<>();
+        //saving by batches
+        for (int i = 0; i < pokemonModelList.size(); i += batchSize) {
 
-        for (PokemonModel pokemonModel : pokemonModelList) {
-            futures.add(executor.submit(() -> pokemonMoveFetcher.fetchMovesForPokemon(pokemonModel)));
-        }
+            //current subList based on batch size
+            List<PokemonModel> batch = pokemonModelList.subList(i, Math.min(i + batchSize, pokemonModelList.size()));
 
-        List<PokemonMovesetModel> allMovesets = new ArrayList<>();
+            //list of CompletableFutures for all Pokémon models in the current batch
+            List<CompletableFuture<List<PokemonMovesetModel>>> futures = batch.stream()
+                    .map(pokemonModel -> CompletableFuture.supplyAsync(() -> {
+                        logger.info("Starting to fetch moves for Pokemon with Pokedex Number: {}", pokemonModel.getPokedexNumber());
+                        List<PokemonMovesetModel> moves = Collections.emptyList();
+                        try {
+                            moves = pokemonMoveFetcher.fetchMovesForPokemon(pokemonModel);
+                            logger.info("Successfully fetched moves for Pokemon with Pokedex Number: {}", pokemonModel.getPokedexNumber());
+                            logger.debug("Fetched moves: {}", moves);
+                        } catch (Exception e) {
+                            logger.error("Error fetching moves for Pokemon with Pokedex Number: {}", pokemonModel.getPokedexNumber(), e);
+                        }
+                        return moves;
+                    }, executor))
+                    .toList();
 
-        for (Future<List<PokemonMovesetModel>> future : futures) {
-            try {
-                List<PokemonMovesetModel> pokemonMoveset = future.get();
-                if (!pokemonMoveset.isEmpty()) {
-                    allMovesets.addAll(pokemonMoveset);
+            List<PokemonMovesetModel> allMovesets = futures.stream()
+                    .flatMap(future -> {
+                        try {
+                            return future.get().stream(); //waits for each future to complete
+                        } catch (InterruptedException | ExecutionException e) {
+                            logger.error("Error retrieving movesets:", e);
+                            return Stream.empty();
+                        }
+                    })
+                    .collect(Collectors.toList());
+
+            //saving all move sets in one batch for the current batch, if any exist
+            if (!allMovesets.isEmpty()) {
+                try {
+                    pokemonMovesetRepo.saveAll(allMovesets);
+                    logger.info("Successfully saved all Pokemon move set models for batch starting at index " + i + "!");
+                } catch (Exception e) {
+                    logger.error("Error during batch save to repository", e);
                 }
-            } catch (InterruptedException | ExecutionException e) {
-                logger.error("Error saving Pokemon movesets:", e);
-            }
-        }
-
-        //saving all movesets in one batch, if any exist
-        if (!allMovesets.isEmpty()) {
-            try {
-                pokemonMovesetRepo.saveAll(allMovesets);
-                logger.info("Successfully saved all Pokemon movesets.");
-            } catch (Exception e) {
-                logger.error("Error during batch save to repository", e);
             }
         }
 
         executor.shutdown();
+
         try {
-            if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
-                executor.shutdownNow();  //forcing shutdown if tasks didn't finish in a min
+            if (!executor.awaitTermination(60, TimeUnit.SECONDS)) { //shuts down if it takes more than a minute
+                executor.shutdownNow();
             }
         } catch (InterruptedException e) {
             executor.shutdownNow();

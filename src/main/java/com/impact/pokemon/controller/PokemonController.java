@@ -4,7 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.impact.pokemon.model.PokemonModel;
 import com.impact.pokemon.model.SimulationModel;
+import com.impact.pokemon.repository.PokemonMovesetRepo;
+import com.impact.pokemon.service.PokemonModelRepoServiceImpl;
 import com.impact.pokemon.service.PokemonMoveFetcher;
+import com.impact.pokemon.service.PokemonMovesetModelRepoServiceImpl;
 import com.impact.pokemon.service.SimulationServiceImpl;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -52,6 +55,8 @@ public class PokemonController {
             logger.error("One or both Pokemon names are invalid: " + pokemon1 + ", " + pokemon2);
             return ResponseEntity.badRequest().body("<h1>Invalid Pokemon names provided.</h1><button onclick='window.history.back()'>Back</button>");
         }
+
+        pokemonMoveFetcher.fetchMovesForPokemon(pokemonModel1.get());
 
         logger.info(String.format("%s and %s enter the battle. Starting simulation!",
                 StringUtils.capitalize(pokemonModel1.get().getNameValue()), StringUtils.capitalize(pokemonModel2.get().getNameValue())));

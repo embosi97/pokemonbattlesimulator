@@ -10,3 +10,6 @@ spring:
 
 pokeApi:
   url: https://pokeapi.co/api/v2/pokemon/
+
+graphQLApi:
+  url: https://beta.pokeapi.co/graphql/v1beta

@@ -18,10 +18,13 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @Service
 public class PokemonMoveFetcher {
@@ -33,86 +36,109 @@ public class PokemonMoveFetcher {
 
     private final ObjectMapper objectMapper;
 
+    private final AtomicInteger moveId = new AtomicInteger(0);
+
     public PokemonMoveFetcher(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 
-    private String fetchPokemonData(int pokemonId) {
+    //synchronized method so threads can only hit the API one at a time
+    private synchronized String fetchPokemonData(int pokemonId) {
         HttpResponse<String> response;
         try {
+            logger.info("Making request for Pokemon ID " + pokemonId);
             response = Unirest.get(pokeApiUrl +
                     URLEncoder.encode(String.valueOf(pokemonId), StandardCharsets.UTF_8)).asString();
+            logger.info("Response Code: " + response.getCode());
+
+            if (response.getCode() != 200) {
+                logger.error("Failed to fetch data for Pokémon with ID " + pokemonId + ": " + response.getBody());
+                throw new RuntimeException("Failed to fetch data: " + response.getBody());
+            }
         } catch (UnirestException e) {
-            throw new RuntimeException(e);
+            logger.error("Error during API call for Pokémon ID: " + pokemonId, e);
+            throw new RuntimeException("Error during API call", e);
         }
         return response.getBody();
     }
 
     public List<PokemonMovesetModel> fetchMovesForPokemon(PokemonModel pokemonModel) {
+
         String pokemonData = fetchPokemonData(pokemonModel.getPokedexNumber());
 
         JsonNode pokemonNode;
         JsonNode movesJson;
 
         try {
-            //parse the JSON for the Pokémon and move details
+            //parse JSON for Pokemon data
             pokemonNode = objectMapper.readTree(pokemonData);
             movesJson = objectMapper.readTree(PokemonMoveFetcher.class.getResourceAsStream("/data/moves.json"));
 
         } catch (IOException e) {
+            logger.error("Error parsing JSON data for Pokémon: " + pokemonModel.getNameValue(), e);
             throw new RuntimeException("Error parsing JSON data", e);
         }
 
-        //retrieving entire Pokemon move set
+        //retrieving moves
         JsonNode movesNode = pokemonNode.get("moves");
 
-        //list to hold the detailed move information
-        List<Future<PokemonMovesetModel>> futures = new ArrayList<>();
-
-        //thread pool
-        ExecutorService executor = Executors.newFixedThreadPool(10);
-
-        //iterate through the Pokemon's moves and submit tasks to fetch and process move details
-        for (JsonNode moveNode : movesNode) {
-
-            String moveName = moveNode.get("move").get("name").asText().replaceAll("-", "");
-
-            //submit each move processing task to the executor service
-            futures.add(executor.submit(() -> processMove(pokemonModel, moveName, movesJson)));
+        if (movesNode == null || movesNode.isEmpty()) {
+            String message = "No moves found for Pokémon: " + pokemonModel.getNameValue();
+            logger.error(message);
+            throw new RuntimeException(message);
         }
 
-        //shutdown the executor service after tasks are submitted
+        ExecutorService executor = Executors.newFixedThreadPool(5);
+
+        List<CompletableFuture<PokemonMovesetModel>> futures = new ArrayList<>();
+
+        for (JsonNode moveNode : movesNode) {
+            String moveName = moveNode.get("move").get("name").asText().replaceAll("-", "");
+            futures.add(CompletableFuture.supplyAsync(() -> processMove(pokemonModel, moveName, movesJson), executor));
+        }
+
+        List<PokemonMovesetModel> moveDetailsList = futures.stream()
+                .map(future -> {
+                    try {
+                        return future.join(); //waits for other thread to finish
+                    } catch (Exception e) {
+                        logger.error("Error processing move for Pokémon: " + pokemonModel.getNameValue(), e);
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
         executor.shutdown();
 
-        //collect the results from the futures
-        List<PokemonMovesetModel> moveDetailsList = new ArrayList<>();
-        for (Future<PokemonMovesetModel> future : futures) {
-            try {
-                PokemonMovesetModel moveDetail = future.get();
-                if (moveDetail != null) {
-                    moveDetailsList.add(moveDetail);
-                }
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
+        try {
+            if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
+                executor.shutdownNow();
             }
+        } catch (InterruptedException e) {
+            executor.shutdownNow();
+            Thread.currentThread().interrupt();
         }
+
+        logger.info("Move set retrieved for " + pokemonModel.getNameValue());
 
         return moveDetailsList;
     }
+
 
     private PokemonMovesetModel processMove(PokemonModel pokemonModel, String moveName, JsonNode movesJson) {
 
         JsonNode moveDetails = movesJson.get(moveName);
 
         if (moveDetails != null) {
+
             PokemonTypeEnum damageType = PokemonTypeEnum.valueOf(moveDetails.get("type").asText().toUpperCase());
 
             //only adding moves relevant to the Pokemon
-            if (damageType == pokemonModel.getPokemonType() ||
-                    damageType == PokemonTypeEnum.NORMAL ||
-                    (pokemonModel.getSecondaryType() != null && damageType == pokemonModel.getSecondaryType())) {
+            if (isRelevantMove(pokemonModel, damageType)) {
 
                 return PokemonMovesetModel.builder()
+                        .id(moveId.incrementAndGet())
                         .moveName(moveName)
                         .pokedexNumber(pokemonModel.getPokedexNumber())
                         .power(moveDetails.get("basePower").asInt())
@@ -127,6 +153,12 @@ public class PokemonMoveFetcher {
         }
 
         return null;
+    }
+
+    private boolean isRelevantMove(PokemonModel pokemonModel, PokemonTypeEnum damageType) {
+        return (damageType == pokemonModel.getPokemonType() ||
+                damageType == PokemonTypeEnum.NORMAL ||
+                (pokemonModel.getSecondaryType() != null && damageType == pokemonModel.getSecondaryType()));
     }
 
 }
