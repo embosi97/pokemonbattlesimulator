@@ -45,10 +45,10 @@ public class PokemonMovesetModelRepoServiceImpl {
 
     @PostConstruct
     public void init() {
-        if (isPokemonMoveSetDataEmpty()) {
-            logger.info("Populating the database with Pokemon Move Set data on startup.");
-            populateMoveSetDatabase(pokemonModelRepo.findAll());
-        }
+//        if (isPokemonMoveSetDataEmpty()) {
+//            logger.info("Populating the database with Pokemon Move Set data on startup.");
+//            populateMoveSetDatabase(pokemonModelRepo.findAll());
+//        }
     }
 
     public Map<Integer, List<PokemonMovesetModel>> getPokemonMovesetsByPokedex(PokemonModel pokemonModel1,
@@ -63,8 +63,8 @@ public class PokemonMovesetModelRepoServiceImpl {
 
     private void populateMoveSetDatabase(List<PokemonModel> pokemonModelList) {
 
-        //batch size
-        final int batchSize = 2;
+        //fixed batch size
+        final int batchSize = 10;
 
         //fixed thread pool
         ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
@@ -75,7 +75,7 @@ public class PokemonMovesetModelRepoServiceImpl {
             //current subList based on batch size
             List<PokemonModel> batch = pokemonModelList.subList(i, Math.min(i + batchSize, pokemonModelList.size()));
 
-            //list of CompletableFutures for all Pokémon models in the current batch
+            //list of CompletableFutures for all Pokemon models in the current batch
             List<CompletableFuture<List<PokemonMovesetModel>>> futures = batch.stream()
                     .map(pokemonModel -> CompletableFuture.supplyAsync(() -> {
                         logger.info("Starting to fetch moves for Pokemon with Pokedex Number: {}", pokemonModel.getPokedexNumber());

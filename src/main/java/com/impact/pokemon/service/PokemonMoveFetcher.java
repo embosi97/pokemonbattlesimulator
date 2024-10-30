@@ -134,7 +134,7 @@ public class PokemonMoveFetcher {
 
             PokemonTypeEnum damageType = PokemonTypeEnum.valueOf(moveDetails.get("type").asText().toUpperCase());
 
-            //only adding moves relevant to the Pokemon
+            //only adding moves relevant to the Pokemon (their primary/secondary types and NORMAL dmg attacks
             if (isRelevantMove(pokemonModel, damageType)) {
 
                 return PokemonMovesetModel.builder()

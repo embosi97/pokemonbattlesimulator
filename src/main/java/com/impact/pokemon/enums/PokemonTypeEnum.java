@@ -5,7 +5,7 @@ import lombok.Getter;
 @Getter
 public enum PokemonTypeEnum {
 
-    //Supported Pokemon types (Generation 1 to 5)
+    //supported Pokemon types (Generation 1 to 5)
     NORMAL('n'),
     FIRE('f'),
     WATER('w'),
