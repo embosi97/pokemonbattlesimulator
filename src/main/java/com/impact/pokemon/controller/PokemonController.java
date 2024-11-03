@@ -4,10 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.impact.pokemon.model.PokemonModel;
 import com.impact.pokemon.model.SimulationModel;
-import com.impact.pokemon.repository.PokemonMovesetRepo;
-import com.impact.pokemon.service.PokemonModelRepoServiceImpl;
-import com.impact.pokemon.service.PokemonMoveFetcher;
-import com.impact.pokemon.service.PokemonMovesetModelRepoServiceImpl;
 import com.impact.pokemon.service.SimulationServiceImpl;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -33,9 +29,6 @@ public class PokemonController {
 
     @Autowired
     private final SimulationServiceImpl simService;
-
-    @Autowired
-    private final PokemonMoveFetcher pokemonMoveFetcher;
 
     @GetMapping("/attack")
     public ResponseEntity<String> simulateBattle(

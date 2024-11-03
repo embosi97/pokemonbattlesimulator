@@ -21,10 +21,11 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,6 +35,8 @@ public class PokemonModelRepoServiceImpl {
     private static final Logger logger = LoggerFactory.getLogger(PokemonModelRepoServiceImpl.class);
 
     private final PokemonModelRepo pokemonModelRepo;
+
+    private final ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
     @Autowired
     public PokemonModelRepoServiceImpl(PokemonModelRepo pokemonModelRepo) {
@@ -77,11 +80,8 @@ public class PokemonModelRepoServiceImpl {
     private void populatePokemonDatabase() {
 
         final InputStream inputStream = PokemonModelRepoServiceImpl.class.getResourceAsStream("/data/pokemongen1to5.csv");
-        CSVReader csvReader = new CSVReader(new InputStreamReader(Objects.requireNonNull(inputStream)));
 
-        List<PokemonModel> pokemonModelList = new ArrayList<>();
-
-        try {
+        try (CSVReader csvReader = new CSVReader(new InputStreamReader(Objects.requireNonNull(inputStream)))) {
 
             csvReader.readNext(); //skip header
 
@@ -92,42 +92,53 @@ public class PokemonModelRepoServiceImpl {
                 allLines.add(nextLine);
             }
 
-            csvReader.close();
-
-            //thread pool
-            ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-            List<Future<PokemonModel>> futures = new ArrayList<>();
+            List<CompletableFuture<PokemonModel>> futures = new ArrayList<>();
 
             for (String[] line : allLines) {
-                futures.add(executor.submit(() -> createPokemonModel(line)));
+                futures.add(CompletableFuture.supplyAsync(() -> createPokemonModel(line), executor));
             }
 
             //results from futures
-            for (Future<PokemonModel> future : futures) {
-                try {
-                    PokemonModel pokemonModel = future.get();
-                    if (pokemonModel != null) {
-                        pokemonModelList.add(pokemonModel);
-                    }
-                } catch (InterruptedException | ExecutionException e) {
-                    throw new RuntimeException(e);
-                }
-            }
+            List<PokemonModel> pokemonModelList = futures.stream().
+                    map(future -> {
+                        try {
+                            return future.join();
+                        } catch (CompletionException e) {
+                            logger.error("Error creating Pokemon model: " + e.getCause());
+                            return null;
+                        }
+                    }) //wait for all to complete and get results
+                    .filter(Objects::nonNull)
+                    .toList();
 
-            executor.shutdown();
+            pokemonModelRepo.saveAll(pokemonModelList);
+
+            logger.info("All Pokemon Models were saved.");
 
         } catch (IOException | CsvValidationException e) {
             throw new RuntimeException(e);
+        } finally {
+            executorShutdown();
         }
+    }
 
-        pokemonModelRepo.saveAll(pokemonModelList);
+    private void executorShutdown() {
+        executor.shutdown();
+        try {
+            if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
+                executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            executor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
     }
 
     //using Lombok's builder method
     private PokemonModel createPokemonModel(String[] line) {
         return PokemonModel.builder()
                 .pokedexNumber(Integer.parseInt(line[0]))
-                .nameValue(line[1].toLowerCase())
+                .nameValue(filterSpecialCharactersFromName(line[1].toLowerCase()))
                 .pokemonType(Objects.requireNonNull(PokemonTypeEnum.fromValue(line[2].toUpperCase(Locale.ROOT))))
                 .secondaryType(returnSecondaryEnum(line[3].toUpperCase(Locale.ROOT)))
                 .totalStats(Integer.parseInt(line[4]))
@@ -140,6 +151,10 @@ public class PokemonModelRepoServiceImpl {
                 .generation(Integer.parseInt(line[11]))
                 .isLegendary(Boolean.parseBoolean(line[12]))
                 .build();
+    }
+
+    private String filterSpecialCharactersFromName(String pokemonName) {
+        return pokemonName.replace(".", "");
     }
 
     private Optional<PokemonTypeEnum> checkSecondaryType(String secondaryType) {
