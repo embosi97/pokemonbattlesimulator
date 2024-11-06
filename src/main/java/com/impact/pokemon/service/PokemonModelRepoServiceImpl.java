@@ -154,7 +154,11 @@ public class PokemonModelRepoServiceImpl {
     }
 
     private String filterSpecialCharactersFromName(String pokemonName) {
-        return pokemonName.replace(".", "");
+        return pokemonName
+                .replaceAll("[.']", "")
+                .replaceAll("\\s", "-")
+                .replace("â™‚", "a-m") //29
+                .replace("â™€", "a-f"); //32
     }
 
     private Optional<PokemonTypeEnum> checkSecondaryType(String secondaryType) {

@@ -22,7 +22,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Service
 public class PokemonMoveSetEndpoint {
@@ -32,12 +34,22 @@ public class PokemonMoveSetEndpoint {
 
     private static final Logger logger = LoggerFactory.getLogger(PokemonMoveSetEndpoint.class);
 
+    private final com.fasterxml.jackson.databind.JsonNode movesJson;
+
     private final ObjectMapper objectMapper;
 
     private final ExecutorService executor = Executors.newFixedThreadPool(10);
 
+    private final AtomicInteger moveId = new AtomicInteger(0);
+
     public PokemonMoveSetEndpoint(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
+        try {
+            movesJson = objectMapper.readTree(PokemonMoveSetEndpoint.class.getResourceAsStream("/data/moves.json"));
+        } catch (IOException e) {
+            logger.error("Error loading moves.json", e);
+            throw new RuntimeException("Error loading moves.json", e);
+        }
     }
 
     private synchronized String fetchMoveSetDataByPokemon(String pokemonName) {
@@ -56,7 +68,7 @@ public class PokemonMoveSetEndpoint {
         Unirest.setTimeouts(10000, 10000);
 
         try {
-            logger.info("Making request for Pokemon: " + pokemonName);
+            logger.info("Making request for Pokemon: " + pokemonName); //no rate limiter for this API
             response = Unirest.post(graphQLApi)
                     .header("Content-Type", "application/json")
                     .body(graphqlQuery)
@@ -81,12 +93,10 @@ public class PokemonMoveSetEndpoint {
         String pokemonData = fetchMoveSetDataByPokemon(pokemonModel.getNameValue());
 
         com.fasterxml.jackson.databind.JsonNode pokemonNode;
-        com.fasterxml.jackson.databind.JsonNode movesJson;
 
         try {
-            //parse the JSON data
+            //parse the JSON data for the Pokemon's move set from the GraphQL API
             pokemonNode = objectMapper.readTree(pokemonData);
-            movesJson = objectMapper.readTree(PokemonMoveSetEndpoint.class.getResourceAsStream("/data/moves.json"));
 
         } catch (IOException e) {
             logger.error("Error parsing JSON data for Pokemon: " + pokemonModel.getNameValue(), e);
@@ -102,16 +112,13 @@ public class PokemonMoveSetEndpoint {
             throw new RuntimeException(message);
         }
 
-        List<CompletableFuture<PokemonMovesetModel>> futures = new ArrayList<>();
-
-        for (com.fasterxml.jackson.databind.JsonNode moveNode : movesNode) {
-
-            String moveName = moveNode.at("/pokemon_v2_move/name").asText().replaceAll("-", "");
-
-            int moveId = moveNode.at("/pokemon_v2_move/id").asInt();
-
-            futures.add(CompletableFuture.supplyAsync(() -> processMove(pokemonModel, moveName, moveId, movesJson), executor));
-        }
+        List<CompletableFuture<PokemonMovesetModel>> futures = StreamSupport.stream(movesNode.spliterator(), false)
+                .map(moveNode ->
+                {
+                    String moveName = moveNode.at("/pokemon_v2_move/name").asText().replaceAll("-", "");
+                    return CompletableFuture.supplyAsync(() -> processMove(pokemonModel, moveName, movesJson), executor);
+                })
+                .toList();
 
         List<PokemonMovesetModel> moveDetailsList = futures.stream()
                 .map(this::getMoveDetailsFromFuture)
@@ -144,7 +151,7 @@ public class PokemonMoveSetEndpoint {
         }
     }
 
-    private PokemonMovesetModel processMove(PokemonModel pokemonModel, String moveName, int moveId, com.fasterxml.jackson.databind.JsonNode movesJson) {
+    private PokemonMovesetModel processMove(PokemonModel pokemonModel, String moveName, com.fasterxml.jackson.databind.JsonNode movesJson) {
 
         com.fasterxml.jackson.databind.JsonNode moveDetails = movesJson.get(moveName);
 
@@ -156,7 +163,7 @@ public class PokemonMoveSetEndpoint {
             if (isRelevantMove(pokemonModel, damageType)) {
 
                 return PokemonMovesetModel.builder()
-                        .id(moveId)
+                        .id(moveId.incrementAndGet())
                         .moveName(moveName)
                         .pokedexNumber(pokemonModel.getPokedexNumber())
                         .power(moveDetails.get("basePower").asInt())
