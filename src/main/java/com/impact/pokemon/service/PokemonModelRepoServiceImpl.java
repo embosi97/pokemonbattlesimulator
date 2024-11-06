@@ -157,8 +157,8 @@ public class PokemonModelRepoServiceImpl {
         return pokemonName
                 .replaceAll("[.']", "")
                 .replaceAll("\\s", "-")
-                .replace("â™‚", "a-m") //29
-                .replace("â™€", "a-f"); //32
+                .replace("â™‚", "a-m") //#32
+                .replace("â™€", "a-f"); //#29
     }
 
     private Optional<PokemonTypeEnum> checkSecondaryType(String secondaryType) {

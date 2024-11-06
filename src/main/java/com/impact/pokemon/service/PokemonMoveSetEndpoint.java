@@ -34,7 +34,7 @@ public class PokemonMoveSetEndpoint {
 
     private static final Logger logger = LoggerFactory.getLogger(PokemonMoveSetEndpoint.class);
 
-    private final com.fasterxml.jackson.databind.JsonNode movesJson;
+    private final com.fasterxml.jackson.databind.JsonNode movesJson; //no need to read it multiple times anymore
 
     private final ObjectMapper objectMapper;
 
