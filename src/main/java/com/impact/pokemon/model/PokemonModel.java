@@ -45,4 +45,5 @@ public class PokemonModel {
     private int generation;
 
     private boolean isLegendary;
+
 }

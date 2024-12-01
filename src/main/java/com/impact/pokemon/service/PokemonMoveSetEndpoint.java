@@ -3,7 +3,7 @@ package com.impact.pokemon.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.impact.pokemon.enums.PokemonTypeEnum;
 import com.impact.pokemon.model.PokemonModel;
-import com.impact.pokemon.model.PokemonMovesetModel;
+import com.impact.pokemon.model.PokemonMoveModel;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
@@ -87,7 +87,7 @@ public class PokemonMoveSetEndpoint {
         return response.getBody().toString();
     }
 
-    public List<PokemonMovesetModel> fetchMovesForPokemon(PokemonModel pokemonModel) {
+    public List<PokemonMoveModel> fetchMovesForPokemon(PokemonModel pokemonModel) {
 
         String pokemonData = fetchMoveSetDataByPokemon(pokemonModel.getNameValue());
 
@@ -111,7 +111,7 @@ public class PokemonMoveSetEndpoint {
             throw new RuntimeException(message);
         }
 
-        List<CompletableFuture<PokemonMovesetModel>> futures = StreamSupport.stream(movesNode.spliterator(), false)
+        List<CompletableFuture<PokemonMoveModel>> futures = StreamSupport.stream(movesNode.spliterator(), false)
                 .map(moveNode ->
                 {
                     String moveName = moveNode.at("/pokemon_v2_move/name").asText().replaceAll("-", "");
@@ -119,7 +119,7 @@ public class PokemonMoveSetEndpoint {
                 })
                 .toList();
 
-        List<PokemonMovesetModel> moveDetailsList = futures.stream()
+        List<PokemonMoveModel> moveDetailsList = futures.stream()
                 .map(this::getMoveDetailsFromFuture)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
@@ -141,7 +141,7 @@ public class PokemonMoveSetEndpoint {
         }
     }
 
-    private PokemonMovesetModel getMoveDetailsFromFuture(CompletableFuture<PokemonMovesetModel> future) {
+    private PokemonMoveModel getMoveDetailsFromFuture(CompletableFuture<PokemonMoveModel> future) {
         try {
             return future.join();
         } catch (Exception e) {
@@ -150,7 +150,7 @@ public class PokemonMoveSetEndpoint {
         }
     }
 
-    private PokemonMovesetModel processMove(PokemonModel pokemonModel, String moveName, com.fasterxml.jackson.databind.JsonNode movesJson) {
+    private PokemonMoveModel processMove(PokemonModel pokemonModel, String moveName, com.fasterxml.jackson.databind.JsonNode movesJson) {
 
         com.fasterxml.jackson.databind.JsonNode moveDetails = movesJson.get(moveName);
 
@@ -161,7 +161,7 @@ public class PokemonMoveSetEndpoint {
             //only adding moves relevant to the Pokemon (their primary/secondary types and NORMAL dmg attacks
             if (isRelevantMove(pokemonModel, damageType)) {
 
-                return PokemonMovesetModel.builder()
+                return PokemonMoveModel.builder()
                         .id(moveId.incrementAndGet())
                         .moveName(moveName)
                         .pokedexNumber(pokemonModel.getPokedexNumber())

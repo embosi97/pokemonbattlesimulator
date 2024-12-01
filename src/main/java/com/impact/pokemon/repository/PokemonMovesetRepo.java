@@ -1,12 +1,12 @@
 package com.impact.pokemon.repository;
 
-import com.impact.pokemon.model.PokemonMovesetModel;
+import com.impact.pokemon.model.PokemonMoveModel;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;
 
-public interface PokemonMovesetRepo extends MongoRepository<PokemonMovesetModel, Integer> {
+public interface PokemonMovesetRepo extends MongoRepository<PokemonMoveModel, Integer> {
 
-    List<PokemonMovesetModel> findByPokedexNumber(int pokedexId);
+    List<PokemonMoveModel> findByPokedexNumber(int pokedexId);
 
 }

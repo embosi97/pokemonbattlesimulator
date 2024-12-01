@@ -14,7 +14,7 @@ import javax.persistence.Id;
 @Builder
 @JsonAutoDetect
 @Document(collection = "PokemonMovesetCollection")
-public class PokemonMovesetModel {
+public class PokemonMoveModel {
 
     @Id
     private int id;

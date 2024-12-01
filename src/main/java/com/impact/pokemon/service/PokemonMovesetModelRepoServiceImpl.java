@@ -1,7 +1,8 @@
 package com.impact.pokemon.service;
 
+import com.impact.pokemon.enums.PokemonMovesEnum;
 import com.impact.pokemon.model.PokemonModel;
-import com.impact.pokemon.model.PokemonMovesetModel;
+import com.impact.pokemon.model.PokemonMoveModel;
 import com.impact.pokemon.repository.PokemonModelRepo;
 import com.impact.pokemon.repository.PokemonMovesetRepo;
 import org.slf4j.Logger;
@@ -19,6 +20,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -35,7 +37,7 @@ public class PokemonMovesetModelRepoServiceImpl {
 
     private final ExecutorService executor = Executors.newFixedThreadPool(20);
 
-    private final Map<Integer, List<PokemonMovesetModel>> cache = new HashMap<>(); //for pokemon that don't have moveset data
+    private final Map<Integer, List<PokemonMoveModel>> cache = new HashMap<>(); //for pokemon that don't have moveset data
 
     @Autowired
     public PokemonMovesetModelRepoServiceImpl(PokemonMovesetRepo pokemonMovesetRepo, PokemonModelRepo pokemonModelRepo, PokemonMoveSetEndpoint pokemonMoveSetEndpoint) {
@@ -55,26 +57,26 @@ public class PokemonMovesetModelRepoServiceImpl {
         }
     }
 
-    public Map<Integer, List<PokemonMovesetModel>> getPokemonMovesetsByPokedex(Set<PokemonModel> pokemonModelSet) {
+    public Map<Integer, List<PokemonMoveModel>> getPokemonMovesetsByPokedex(Set<PokemonModel> pokemonModelSet) {
 
-        Map<Integer, List<PokemonMovesetModel>> map = pokemonModelSet.parallelStream()  //concurrency (faster)
+        Map<Integer, List<PokemonMoveModel>> map = pokemonModelSet.parallelStream()  //concurrency (faster)
                 .map(pokemonModel -> {
 
                     int pokedexNumber = pokemonModel.getPokedexNumber();
-                    List<PokemonMovesetModel> pokemonMovesetModelList;
+                    List<PokemonMoveModel> pokemonMoveModelList;
 
                     if (cache.containsKey(pokedexNumber)) {
-                        pokemonMovesetModelList = cache.get(pokedexNumber);
+                        pokemonMoveModelList = cache.get(pokedexNumber);
                     } else {
-                        pokemonMovesetModelList = fetchExistingMoveSetOrRetrieveNewOne(pokemonModel);
+                        pokemonMoveModelList = fetchExistingMoveSetOrRetrieveNewOne(pokemonModel);
                     }
 
-                    return new AbstractMap.SimpleEntry<>(pokedexNumber, pokemonMovesetModelList);
+                    return new AbstractMap.SimpleEntry<>(pokedexNumber, pokemonMoveModelList);
                 })
                 .filter(entry -> entry.getValue() != null && !entry.getValue().isEmpty())  //filter out empty move sets
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)); //convert to standard Map<>
 
-        List<PokemonMovesetModel> newMoveSets = map.values().stream()
+        List<PokemonMoveModel> newMoveSets = map.values().stream()
                 .flatMap(List::stream)
                 .filter(moveset -> cache.containsKey(moveset.getPokedexNumber())) //only the move sets in the cache will be saved
                 .collect(Collectors.toList());
@@ -86,7 +88,19 @@ public class PokemonMovesetModelRepoServiceImpl {
         return map;
     }
 
-    private List<PokemonMovesetModel> fetchExistingMoveSetOrRetrieveNewOne(PokemonModel pokemonModel) {
+    public PokemonMoveModel retrievePokemonMoveFromPokedexId(int pokedexId, Map<Integer, List<PokemonMoveModel>> pokemonMovesets) {
+
+        return pokemonMovesets.get(pokedexId)
+                .get(ThreadLocalRandom.current().nextInt(pokemonMovesets.get(pokedexId).size()));
+    }
+
+    private PokemonMovesEnum retrieveMoveEffectFromMove(PokemonMoveModel pokemonMoveModel){
+
+        return PokemonMovesEnum
+                .fromShortDesc(pokemonMoveModel.getEffect());
+    }
+
+    private List<PokemonMoveModel> fetchExistingMoveSetOrRetrieveNewOne(PokemonModel pokemonModel) {
 
         int pokedexId = pokemonModel.getPokedexNumber();
 
@@ -94,15 +108,15 @@ public class PokemonMovesetModelRepoServiceImpl {
             return cache.get(pokedexId);
         }
 
-        List<PokemonMovesetModel> pokemonMovesetModelList =
+        List<PokemonMoveModel> pokemonMoveModelList =
                 pokemonMovesetRepo.findByPokedexNumber(pokemonModel.getPokedexNumber());
 
-        if (pokemonMovesetModelList.isEmpty()) {
-            pokemonMovesetModelList = fetchAndProcessMoves(pokemonModel);
-            cache.put(pokedexId, pokemonMovesetModelList);
+        if (pokemonMoveModelList.isEmpty()) {
+            pokemonMoveModelList = fetchAndProcessMoves(pokemonModel);
+            cache.put(pokedexId, pokemonMoveModelList);
         }
 
-        return pokemonMovesetModelList;
+        return pokemonMoveModelList;
     }
 
 
@@ -112,7 +126,7 @@ public class PokemonMovesetModelRepoServiceImpl {
 
         for (int i = 0; i < pokemonModelList.size(); i += batchSize) {
 
-            List<CompletableFuture<List<PokemonMovesetModel>>> futures =
+            List<CompletableFuture<List<PokemonMoveModel>>> futures =
                     pokemonModelList.subList(i, Math.min(i + batchSize, pokemonModelList.size())).stream()
                             .map(pokemonModel -> CompletableFuture.supplyAsync(() -> fetchAndProcessMoves(pokemonModel), executor))
                             .toList();
@@ -147,9 +161,9 @@ public class PokemonMovesetModelRepoServiceImpl {
         }
     }
 
-    private void processAndSavePokemonMovesetsByBatch(List<CompletableFuture<List<PokemonMovesetModel>>> futures, int batchId) {
+    private void processAndSavePokemonMovesetsByBatch(List<CompletableFuture<List<PokemonMoveModel>>> futures, int batchId) {
 
-        List<PokemonMovesetModel> allMovesets = futures.stream()
+        List<PokemonMoveModel> allMovesets = futures.stream()
                 .flatMap(future -> future.join().stream())
                 .collect(Collectors.toList());
 
@@ -159,7 +173,7 @@ public class PokemonMovesetModelRepoServiceImpl {
         }
     }
 
-    private List<PokemonMovesetModel> fetchAndProcessMoves(PokemonModel pokemonModel) {
+    private List<PokemonMoveModel> fetchAndProcessMoves(PokemonModel pokemonModel) {
         try {
             return pokemonMoveSetEndpoint.fetchMovesForPokemon(pokemonModel);
         } catch (Exception e) {
